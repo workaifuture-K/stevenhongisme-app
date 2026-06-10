@@ -1,0 +1,130 @@
+[
+    {
+        "yield_estimate":  "~2-3%",
+        "name":  "元大台灣50",
+        "code":  "0050",
+        "payout":  "半年配",
+        "price_range":  "65-72",
+        "theme":  "市值型 ETF"
+    },
+    {
+        "yield_estimate":  "~2-3%",
+        "name":  "富邦台50",
+        "code":  "006208",
+        "payout":  "半年配",
+        "price_range":  "95-105",
+        "theme":  "市值型 ETF"
+    },
+    {
+        "yield_estimate":  "~5-7%",
+        "name":  "元大高股息",
+        "code":  "0056",
+        "payout":  "季配",
+        "price_range":  "37-42",
+        "theme":  "高股息 ETF"
+    },
+    {
+        "yield_estimate":  "~6-8%",
+        "name":  "國泰永續高股息",
+        "code":  "00878",
+        "payout":  "季配",
+        "price_range":  "23-28",
+        "theme":  "高股息 ETF"
+    },
+    {
+        "yield_estimate":  "~7-12%",
+        "name":  "群益台灣精選高息",
+        "code":  "00919",
+        "payout":  "季配",
+        "price_range":  "22-25",
+        "theme":  "高股息 ETF"
+    },
+    {
+        "yield_estimate":  "~5-7%",
+        "name":  "復華台灣科技優息",
+        "code":  "00929",
+        "payout":  "月配",
+        "price_range":  "18-26",
+        "theme":  "高股息 ETF"
+    },
+    {
+        "yield_estimate":  "~6-8%",
+        "name":  "元大台灣高息低波",
+        "code":  "00713",
+        "payout":  "季配",
+        "price_range":  "50-58",
+        "theme":  "高股息 ETF"
+    },
+    {
+        "yield_estimate":  "~10-11%",
+        "name":  "大華優利高填息30",
+        "code":  "00918",
+        "payout":  "季配",
+        "price_range":  "22-25",
+        "theme":  "高股息 ETF"
+    },
+    {
+        "yield_estimate":  "~10-12%",
+        "name":  "中信關鍵半導體",
+        "code":  "00891",
+        "payout":  "季配",
+        "price_range":  "28-34",
+        "theme":  "高股息 ETF"
+    },
+    {
+        "yield_estimate":  "~13-16%",
+        "name":  "群益台灣半導體收益",
+        "code":  "00927",
+        "payout":  "季配",
+        "price_range":  "20-28",
+        "theme":  "高股息 ETF"
+    },
+    {
+        "yield_estimate":  "~6-8% (預估)",
+        "name":  "主動統一台股增長",
+        "code":  "00981A",
+        "payout":  "季配",
+        "price_range":  "14-18",
+        "theme":  "高股息 ETF"
+    },
+    {
+        "yield_estimate":  "待首配",
+        "name":  "主動統一升級50",
+        "code":  "00403A",
+        "payout":  "季配",
+        "price_range":  "10-12",
+        "theme":  "市值型 ETF"
+    },
+    {
+        "yield_estimate":  "~1-1.5%",
+        "name":  "台積電",
+        "code":  "2330",
+        "payout":  "季配",
+        "price_range":  "1400-1800",
+        "theme":  "個股"
+    },
+    {
+        "yield_estimate":  "~2-3%",
+        "name":  "鴻海",
+        "code":  "2317",
+        "payout":  "年配",
+        "price_range":  "200-260",
+        "theme":  "個股"
+    },
+    {
+        "yield_estimate":  "~1.5-2%",
+        "name":  "台達電",
+        "code":  "2308",
+        "payout":  "年配",
+        "price_range":  "800-1200",
+        "theme":  "個股"
+    },
+    {
+        "yield_estimate":  "~3-4%",
+        "name":  "聯發科",
+        "code":  "2454",
+        "payout":  "年配",
+        "price_range":  "1200-1700",
+        "theme":  "個股"
+    }
+]

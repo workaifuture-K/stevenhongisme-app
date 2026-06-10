@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+<meta name="theme-color" content="#10b981">
+<title>稀飯的 ETF 日報 — Prototype</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="app">
+
+  <header class="header" id="appHeader">
+    <div class="header-row">
+      <div class="avatar">🍚</div>
+      <div style="flex:1">
+        <div class="persona-name">稀飯</div>
+        <div class="persona-tag">ETF 配息日報級觀察家</div>
+      </div>
+    </div>
+    <div class="header-stats">
+      <div><b>1,059</b>篇貼文</div>
+      <div><b>12</b>主題</div>
+      <div><b>每日</b>更新</div>
+    </div>
+  </header>
+
+  <div class="mock-banner">📌 Prototype — 所有數字為示範用途，非實際資料</div>
+
+  <main>
+    <!-- ─────────── HOME ─────────── -->
+    <section id="view-home" class="view active">
+      <div class="section-title">⭐ 熱門工具</div>
+
+      <!-- Featured tool: 補充保費試算機 (large card, hero of Home) -->
+      <a href="#calc" class="featured-tool" data-view-link>
+        <div class="ft-icon">🧮</div>
+        <div class="ft-meta">
+          <div class="ft-badge">最受歡迎</div>
+          <div class="ft-title">補充保費試算機</div>
+          <div class="ft-desc">選 ETF + 持有張數 → 立刻算出單期配息 / 是否課 2.11% 補充保費 / 需持有多少張會觸發</div>
+          <div class="ft-cta">立即試算 →</div>
+        </div>
+      </a>
+
+      <!-- 3 other tools in smaller grid -->
+      <div class="grid-quick">
+        <a href="#yield" class="quick-link">
+          <span class="ql-icon">📈</span>
+          <div class="ql-label">殖利率排行</div>
+          <div class="ql-sub">即時更新</div>
+        </a>
+        <a href="#calendar" class="quick-link">
+          <span class="ql-icon">📅</span>
+          <div class="ql-label">除息日曆</div>
+          <div class="ql-sub">未來 30 天</div>
+        </a>
+        <a href="#watchlist" class="quick-link">
+          <span class="ql-icon">⭐</span>
+          <div class="ql-label">我的關注</div>
+          <div class="ql-sub">5 檔追蹤中</div>
+        </a>
+        <a href="#library" class="quick-link">
+          <span class="ql-icon">📚</span>
+          <div class="ql-label">主題知識庫</div>
+          <div class="ql-sub">12 個主題</div>
+        </a>
+      </div>
+
+    </section>
+
+    <!-- ─────────── LIBRARY ─────────── -->
+    <section id="view-library" class="view">
+      <div class="section-title">📌 今日重點</div>
+      <div id="library-featured"></div>
+
+      <div class="section-title">12 個 ETF / 存股主題</div>
+      <div id="library-themes" class="grid-themes"></div>
+    </section>
+
+    <!-- ─────────── THEME ─────────── -->
+    <section id="view-theme" class="view">
+      <div id="theme-header"></div>
+      <div class="section-title">該主題文章</div>
+      <div id="theme-posts"></div>
+    </section>
+
+    <!-- ─────────── POST DETAIL ─────────── -->
+    <section id="view-post" class="view">
+      <div id="post-content"></div>
+    </section>
+
+    <!-- ─────────── CALCULATOR ─────────── -->
+    <section id="view-calc" class="view">
+      <div class="calc-hero">
+        <h2>🧮 補充保費試算機</h2>
+        <p>選一檔 ETF + 輸入持有張數 → 立刻算出單期配息、是否被課補充保費</p>
+      </div>
+
+      <div class="calc-form">
+        <label for="calc-etf">ETF / 個股</label>
+        <select id="calc-etf"></select>
+
+        <label for="calc-shares">持有張數（張）</label>
+        <input type="number" id="calc-shares" min="1" max="9999" value="20">
+
+        <label for="calc-dividend">每股配息（元）<span style="font-weight:normal;color:#9ca3af">— 預設值可改</span></label>
+        <input type="number" id="calc-dividend" step="0.01" min="0" value="1.00">
+      </div>
+
+      <div class="calc-result">
+        <div class="calc-result-row">
+          <span class="calc-result-label">單期配息總額</span>
+          <span class="calc-result-val" id="calc-total">NT$ 20,000</span>
+        </div>
+        <div class="calc-result-row">
+          <span class="calc-result-label">是否觸發補充保費</span>
+          <span class="calc-result-val" id="calc-trigger">否</span>
+        </div>
+        <div class="calc-result-row">
+          <span class="calc-result-label">補充保費金額 (2.11%)</span>
+          <span class="calc-result-val" id="calc-fee">NT$ 0</span>
+        </div>
+        <div class="calc-result-row">
+          <span class="calc-result-label">需持有多少張會觸發</span>
+          <span class="calc-result-val" id="calc-threshold">— 張</span>
+        </div>
+
+        <div class="threshold-bar">
+          <div class="threshold-bar-fill" id="calc-bar" style="width:0%"></div>
+        </div>
+        <div class="threshold-marker">NT$ 20,000 門檻</div>
+      </div>
+
+      <div class="upsell">
+        <b>📥 加入 LINE 社群拿完整版工具</b><br>
+        含 50+ ETF 預估配息資料庫、年度試算、配息行事曆。
+        <br>
+        <a href="#monetize" class="upsell-cta" data-view-link>查看訂閱方案 →</a>
+      </div>
+    </section>
+
+    <!-- ─────────── YIELD RANKING ─────────── -->
+    <section id="view-yield" class="view">
+      <div class="back-bar"><a href="#home">← 回工具</a></div>
+      <div style="padding:16px 4px 0">
+        <h2 style="font-size:22px;color:#111827">📈 殖利率排行</h2>
+        <div style="font-size:13px;color:#6b7280;margin-top:4px">Top ETF by 年化殖利率（mock 即時資料）</div>
+      </div>
+
+      <div class="filter-chips" id="yield-filters">
+        <button class="chip active" data-filter="all">全部</button>
+        <button class="chip" data-filter="月配">月配</button>
+        <button class="chip" data-filter="季配">季配</button>
+        <button class="chip" data-filter="半年配">半年配</button>
+      </div>
+
+      <div id="yield-list"></div>
+    </section>
+
+    <!-- ─────────── CALENDAR ─────────── -->
+    <section id="view-calendar" class="view">
+      <div class="back-bar"><a href="#home">← 回工具</a></div>
+      <div style="padding:16px 4px 0">
+        <h2 style="font-size:22px;color:#111827">📅 除息日曆</h2>
+        <div style="font-size:13px;color:#6b7280;margin-top:4px">未來 30 天 ETF 除息日（mock）</div>
+      </div>
+      <div id="calendar-list"></div>
+    </section>
+
+    <!-- ─────────── WATCHLIST ─────────── -->
+    <section id="view-watchlist" class="view">
+      <div class="back-bar"><a href="#home">← 回工具</a></div>
+      <div style="padding:16px 4px 0">
+        <h2 style="font-size:22px;color:#111827">⭐ 我的關注</h2>
+        <div style="font-size:13px;color:#6b7280;margin-top:4px"><span id="watchlist-count">5</span> 檔追蹤中 · 點 ETF 看詳細</div>
+      </div>
+      <div id="watchlist-list"></div>
+      <button class="add-btn" onclick="showToast('完整版功能：+ 新增 ETF 到關注列表');return false;">+ 新增 ETF</button>
+    </section>
+
+    <!-- ─────────── COMMUNITY ─────────── -->
+    <section id="view-community" class="view">
+      <div class="community-hero">
+        <div class="community-hero-row">
+          <div class="community-avatar">🍚</div>
+          <div style="flex:1">
+            <h2>稀飯社團</h2>
+            <p>1,059 篇貼文 · 12 個主題 · 月更 100+</p>
+          </div>
+        </div>
+        <div class="community-cta">想加入稀飯 LINE 封閉社群？月 NT$ 299 ↗</div>
+      </div>
+
+      <div class="filter-chips" id="community-tabs">
+        <button class="chip active" data-sub="profile">稀飯專區</button>
+        <button class="chip" data-sub="vip">VIP 文章區</button>
+        <button class="chip" data-sub="chat">聊天室</button>
+      </div>
+
+      <div id="community-content"></div>
+    </section>
+
+    <!-- ─────────── ALLOCATION ─────────── -->
+    <section id="view-allocation" class="view">
+      <div class="alloc-hero">
+        <h2>🎯 依年齡的建議配置</h2>
+        <p>基於稀飯內容傾向（被動投資派 + ETF 配息為主）的台灣投資人資產配置建議</p>
+      </div>
+
+      <div class="filter-chips" id="age-chips" style="padding:0 4px 12px">
+        <button class="chip active" data-age="20-30">20-30 歲</button>
+        <button class="chip" data-age="30-40">30-40 歲</button>
+        <button class="chip" data-age="40-50">40-50 歲</button>
+        <button class="chip" data-age="50-60">50-60 歲</button>
+        <button class="chip" data-age="60+">60+ 歲</button>
+      </div>
+
+      <div id="alloc-content"></div>
+
+      <div class="alloc-disclaimer">
+        <b>⚠️ 免責聲明</b><br>
+        本配置建議基於稀飯公開內容傾向歸納，僅供示範參考。實際投資請依個人風險承受度、收入支出、家庭責任、退休規劃綜合評估，必要時諮詢專業理財顧問。
+      </div>
+    </section>
+
+    <!-- ─────────── MONETIZE ─────────── -->
+    <section id="view-monetize" class="view">
+      <div class="monet-hero">
+        <h2>💰 稀飯的服務 / 商品</h2>
+        <p>從免費試算工具到付費社群、課程，依需求選擇</p>
+      </div>
+
+      <!-- 1. Free Tool -->
+      <div class="monet-card">
+        <div class="monet-card-header">
+          <div class="monet-card-icon">🧮</div>
+          <div class="monet-card-meta">
+            <div class="monet-card-name">補充保費試算機</div>
+            <span class="monet-card-tag tag-free">免費試用</span>
+          </div>
+          <div class="monet-card-price free">免費</div>
+        </div>
+        <div class="monet-card-desc">立刻算出持有 ETF 是否會被課 2.11% 補充保費。完整版含 50+ ETF 預估配息資料庫。</div>
+        <a href="#calc" class="monet-cta" data-view-link>試用試算機</a>
+      </div>
+
+      <!-- 2. eBook -->
+      <div class="monet-card">
+        <div class="monet-card-header">
+          <div class="monet-card-icon">📖</div>
+          <div class="monet-card-meta">
+            <div class="monet-card-name">《ETF 配息實務手冊》電子書</div>
+            <span class="monet-card-tag tag-product">電子書 · PDF</span>
+          </div>
+          <div class="monet-card-price">NT$ 590</div>
+        </div>
+        <div class="monet-card-desc">120 頁濃縮 1,000+ 篇貼文精華。8 大章：市值 / 高股息 / 債券 / 主動式 ETF / 配息策略 / 補充保費 / 退休規劃 / 進階配置。</div>
+        <div class="monet-card-stat">📊 已 30 人購買 · 4.7 ★ 評價</div>
+        <a href="#" class="monet-cta" onclick="showToast('Prototype — 真實購買連結待接 Money 錢出版社');return false;">立即購買</a>
+      </div>
+
+      <!-- 3. Course -->
+      <div class="monet-card">
+        <div class="monet-card-header">
+          <div class="monet-card-icon">🎓</div>
+          <div class="monet-card-meta">
+            <div class="monet-card-name">《ETF 配息策略入門》課程</div>
+            <span class="monet-card-tag tag-course">Hahow · 線上影片</span>
+          </div>
+          <div class="monet-card-price">NT$ 1,990</div>
+        </div>
+        <div class="monet-card-desc">5 小時影片 + 工作表，學會看懂主動式 ETF、估算填息率、規劃年度配息現金流。</div>
+        <div class="monet-card-stat">🎓 5 人已報名 · 12 章節 · 終身觀看</div>
+        <a href="#" class="monet-cta" onclick="showToast('Prototype — 將上架 Hahow / PressPlay');return false;">立即報名</a>
+      </div>
+
+      <!-- 4. Subscription -->
+      <div class="monet-card">
+        <div class="monet-card-header">
+          <div class="monet-card-icon">💎</div>
+          <div class="monet-card-meta">
+            <div class="monet-card-name">LINE 封閉社群 · 付費版</div>
+            <span class="monet-card-tag tag-sub">每月訂閱</span>
+          </div>
+          <div class="monet-card-price">NT$ 299<span style="font-size:13px;font-weight:normal;color:#6b7280">/月起</span></div>
+        </div>
+        <div class="monet-card-desc">每日盤後 ETF 點評、配息預估提前 24 小時、月度持股 portfolio 更新。50 人已訂閱。</div>
+        <div class="monet-cta tier-row">
+          <a href="#" class="tier" onclick="showToast('Prototype — 月訂閱方案');return false;">月 NT$ 299</a>
+          <a href="#" class="tier recommended" onclick="showToast('Prototype — 季訂閱方案');return false;">季 NT$ 799</a>
+          <a href="#" class="tier" onclick="showToast('Prototype — 年訂閱方案');return false;">年 NT$ 2,790</a>
+        </div>
+      </div>
+
+      <!-- 5. Affiliate -->
+      <div class="monet-card">
+        <div class="monet-card-header">
+          <div class="monet-card-icon">🏦</div>
+          <div class="monet-card-meta">
+            <div class="monet-card-name">券商開戶推薦</div>
+            <span class="monet-card-tag tag-affiliate">業配 · 雙方獲利</span>
+          </div>
+          <div class="monet-card-price free">免費</div>
+        </div>
+        <div class="monet-card-desc">透過稀飯連結開戶，享開戶優惠 + 手續費折扣。</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+          <a href="#" class="monet-cta secondary" onclick="showToast('Prototype — 新光證券推薦連結');return false;" style="font-size:12px;padding:8px">新光證券</a>
+          <a href="#" class="monet-cta secondary" onclick="showToast('Prototype — 富邦證券推薦連結');return false;" style="font-size:12px;padding:8px">富邦證券</a>
+          <a href="#" class="monet-cta secondary" onclick="showToast('Prototype — 國泰證券推薦連結');return false;" style="font-size:12px;padding:8px">國泰證券</a>
+          <a href="#" class="monet-cta secondary" onclick="showToast('Prototype — 永豐證券推薦連結');return false;" style="font-size:12px;padding:8px">永豐證券</a>
+        </div>
+      </div>
+
+      <!-- For CMoney boss link -->
+      <div style="text-align:center;margin-top:24px;padding:14px;font-size:11px;color:#9ca3af">
+        <a href="?role=cmoney#roi" style="color:#9ca3af">→ 給 CMoney 老闆看的 ROI 報告</a>
+      </div>
+    </section>
+
+    <!-- ─────────── ROI DASHBOARD (cmoney only) ─────────── -->
+    <section id="view-roi" class="view">
+      <div class="roi-hero">
+        <div class="roi-hero-title">假設 production 上線 12 個月後</div>
+        <div class="roi-hero-num">NT$ 50,000<span style="font-size:18px;font-weight:600;opacity:0.7"> / 月</span></div>
+        <div class="roi-hero-sub">月總營收（保守估算，新產品起步階段）</div>
+      </div>
+
+      <div class="section-title">營收結構</div>
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="kpi-label">💎 LINE 訂閱</div>
+          <div class="kpi-val">50 人</div>
+          <div class="kpi-sub">月入 NT$ 14,950</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">📖 電子書</div>
+          <div class="kpi-val">30 本/月</div>
+          <div class="kpi-sub">月入 NT$ 17,700</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">🎓 課程</div>
+          <div class="kpi-val">5 人/月</div>
+          <div class="kpi-sub">月入 NT$ 9,950</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">🏦 業配</div>
+          <div class="kpi-val">1.5 個/月</div>
+          <div class="kpi-sub">月均 NT$ 7,500</div>
+        </div>
+      </div>
+
+      <div class="section-title">內容資產 (現有)</div>
+      <div class="card">
+        <div class="card-title">📚 1,059 篇 ETF 貼文</div>
+        <div class="card-summary">
+          IG 465 篇（32.1 個月跨度）+ FB 594 篇（11.9 個月跨度）<br>
+          結構化為 12 個主題知識庫，可包裝成課程 / 電子書 / 訂閱情報。
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">⚡ 日報級產文節奏</div>
+        <div class="card-summary">
+          近 3 個月 +194% 成長率，2026/05 單月 210 篇 FB。產量高 → 內容資產複利效應強。
+        </div>
+      </div>
+
+      <div class="section-title">受眾數據 (待補實際)</div>
+      <div class="card">
+        <div class="card-summary" style="font-size:12px;color:#6b7280">
+          <i>📌 此區數字待稀飯本人提供確認</i><br><br>
+          <b>FB 粉絲：</b>[實際數字待補] · 預估 30,000-60,000<br>
+          <b>IG 粉絲：</b>[實際數字待補] · 預估 10,000-30,000<br>
+          <b>LINE 社群目前人數：</b>[實際數字待補]
+        </div>
+      </div>
+
+      <div class="section-title">對標 KOL 月營收估算</div>
+      <div class="benchmark">
+        <div class="benchmark-row">
+          <div class="benchmark-name">市場先生</div>
+          <div class="benchmark-val">~NT$ 500,000+ /月</div>
+        </div>
+        <div class="benchmark-row">
+          <div class="benchmark-name">清流君</div>
+          <div class="benchmark-val">~NT$ 300,000+ /月</div>
+        </div>
+        <div class="benchmark-row">
+          <div class="benchmark-name">R爸 (Ryan爸爸)</div>
+          <div class="benchmark-val">~NT$ 200,000+ /月</div>
+        </div>
+        <div class="benchmark-row self">
+          <div class="benchmark-name">稀飯 (目標：起步階段)</div>
+          <div class="benchmark-val"><b>~NT$ 50,000 /月</b></div>
+        </div>
+        <div class="benchmark-row self" style="background:#d1fae5">
+          <div class="benchmark-name">稀飯 (目標：12 個月後)</div>
+          <div class="benchmark-val"><b>~NT$ 200,000 /月</b></div>
+        </div>
+      </div>
+
+      <div class="upsell" style="margin-top:20px;background:linear-gradient(135deg,#dbeafe,#bfdbfe)">
+        <b style="color:#1e40af">💡 ROI 結論</b><br>
+        <span style="color:#1e3a8a;font-size:12px">維運成本：1 PM 0.2 人月 + 設計外包 + Hosting，月成本 ~NT$ 15,000。<br>
+        即使保守估算 NT$ 50,000 月營收，毛利率 ~70%，且每月新增內容資產持續累積複利效應。<br>
+        12 個月達到對標 KOL 水準的 50%（NT$ 200,000）為可行目標。</span>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <a href="#home" class="nav-link active" data-view="home"><span class="icon">🛠️</span>工具</a>
+    <a href="#library" class="nav-link" data-view="library"><span class="icon">📚</span>知識</a>
+    <a href="#allocation" class="nav-link" data-view="allocation"><span class="icon">🎯</span>配置</a>
+    <a href="#community" class="nav-link" data-view="community"><span class="icon">👥</span>社團</a>
+    <a href="#monetize" class="nav-link" data-view="monetize"><span class="icon">💰</span>變現</a>
+    <a href="#roi" class="nav-link cmoney-only" data-view="roi"><span class="icon">📊</span>ROI</a>
+  </nav>
+
+</div>
+
+<script src="data/data.js?v=10"></script>
+<script src="data/etfs_extended.js?v=10"></script>
+<script src="js/app.js?v=10"></script>
+</body>
+</html>

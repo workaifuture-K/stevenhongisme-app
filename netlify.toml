@@ -1,0 +1,19 @@
+# Netlify 設定 — 純靜態網站，無 build step
+[build]
+  publish = "."
+  command = ""
+
+# SPA-style：所有路徑都回 index.html（雖然這個 prototype 用 hash routing，
+# 但保險起見讓深層連結也能正常載入）
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# 安全標頭
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
