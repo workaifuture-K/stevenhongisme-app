@@ -304,6 +304,7 @@ function initCalc() {
 
     sel.addEventListener('change', onCalcEtfChange);
     document.getElementById('calc-shares').addEventListener('input', recalc);
+    document.getElementById('calc-odd').addEventListener('input', recalc);
     document.getElementById('calc-dividend').addEventListener('input', recalc);
   }
   // Set initial dividend
@@ -319,21 +320,36 @@ function onCalcEtfChange() {
 }
 
 function recalc() {
-  const shares = parseInt(document.getElementById('calc-shares').value) || 0;
+  const zhang = parseInt(document.getElementById('calc-shares').value) || 0;
+  const odd = parseInt(document.getElementById('calc-odd').value) || 0;
   const divPerShare = parseFloat(document.getElementById('calc-dividend').value) || 0;
-  const totalDividend = shares * 1000 * divPerShare; // 1 zhang = 1000 shares
 
-  const threshold = 20000;
+  // 總股數 = 張數 × 1000 + 零股
+  const totalShares = zhang * 1000 + odd;
+  const totalDividend = totalShares * divPerShare;
+
+  const threshold = 20000; // 單筆股利達 2 萬元觸發
   const triggered = totalDividend >= threshold;
   const fee = triggered ? totalDividend * 0.0211 : 0;
-  const sharesToTrigger = divPerShare > 0 ? Math.ceil(threshold / (divPerShare * 1000)) : 0;
+
+  // 反推：恰好達到門檻需要的「股數」，再換算成「X 張 Y 股」
+  // 觸發條件是「達到」2 萬（含），所以臨界股數 = ceil(20000 / 每股配息)
+  const sharesToTrigger = divPerShare > 0 ? Math.ceil(threshold / divPerShare) : 0;
+  const thZhang = Math.floor(sharesToTrigger / 1000);
+  const thOdd = sharesToTrigger % 1000;
 
   document.getElementById('calc-total').textContent = `NT$ ${formatNum(totalDividend)}`;
   document.getElementById('calc-trigger').textContent = triggered ? '是 ⚠️' : '否 ✓';
   document.getElementById('calc-trigger').className = 'calc-result-val ' + (triggered ? 'warn' : 'good');
   document.getElementById('calc-fee').textContent = `NT$ ${formatNum(fee)}`;
   document.getElementById('calc-fee').className = 'calc-result-val ' + (triggered ? 'warn' : '');
-  document.getElementById('calc-threshold').textContent = sharesToTrigger > 0 ? `${sharesToTrigger} 張` : '— 張';
+
+  // 門檻顯示細到「張 + 股」，零股為 0 時只顯示張
+  let thText = '— 張';
+  if (sharesToTrigger > 0) {
+    thText = thOdd > 0 ? `${formatNum(thZhang)} 張 ${thOdd} 股` : `${formatNum(thZhang)} 張`;
+  }
+  document.getElementById('calc-threshold').textContent = thText;
 
   const pctOfThreshold = Math.min(100, (totalDividend / threshold) * 100);
   document.getElementById('calc-bar').style.width = pctOfThreshold + '%';
