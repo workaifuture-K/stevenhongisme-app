@@ -942,3 +942,59 @@ body {
   text-align: center;
   border-bottom: 1px solid #fde68a;
 }
+
+/* ─── Rating (主動式 ETF 評等) ─────────────────────────────── */
+.rating-hero {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 16px;
+  margin-bottom: 16px;
+}
+.rating-hero h2 { font-size: 22px; }
+.rating-hero p { font-size: 13px; opacity: 0.95; margin-top: 4px; }
+
+.rate-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-bottom: 12px;
+  cursor: pointer;
+}
+.rate-head { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
+.grade-badge {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  color: white;
+  font-size: 22px;
+  font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.rate-meta { flex: 1; }
+.rate-code { font-weight: 800; font-size: 15px; color: #111827; }
+.rate-name { font-weight: 600; font-size: 13px; color: #6b7280; }
+.rate-ytd { font-size: 12px; color: #6b7280; margin-top: 2px; }
+.rate-ytd b { color: #10b981; font-size: 14px; }
+
+.rate-dims { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+.rate-dim { display: flex; align-items: center; gap: 8px; }
+.rate-dim-label { width: 32px; font-size: 11px; color: #6b7280; flex-shrink: 0; }
+.rate-dim-bar { flex: 1; height: 6px; background: #f3f4f6; border-radius: 99px; overflow: hidden; }
+.rate-dim-fill { height: 100%; background: linear-gradient(90deg, #fbbf24, #f59e0b); border-radius: 99px; }
+.rate-dim-val { width: 26px; font-size: 11px; color: #9ca3af; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+
+.rate-comment {
+  font-size: 12px;
+  color: #4b5563;
+  line-height: 1.6;
+  background: #fffbeb;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+/* Bottom nav — 縮小以容納 6-7 tabs */
+.bottom-nav a { font-size: 10px; padding: 5px 0; }
+.bottom-nav a .icon { font-size: 19px; }

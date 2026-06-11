@@ -26,7 +26,7 @@
     </div>
   </header>
 
-  <div class="mock-banner">📌 Prototype — 所有數字為示範用途，非實際資料</div>
+  <div class="mock-banner">📌 Prototype v1.2 — 所有數字為示範用途，非實際資料（更新：2026-06-11）</div>
 
   <main>
     <!-- ─────────── HOME ─────────── -->
@@ -134,7 +134,7 @@
       </div>
 
       <div class="upsell">
-        <b>📥 加入 LINE 社群拿完整版工具</b><br>
+        <b>📥 加入稀飯付費社團，解鎖完整版工具</b><br>
         含 50+ ETF 預估配息資料庫、年度試算、配息行事曆。
         <br>
         <a href="#monetize" class="upsell-cta" data-view-link>查看訂閱方案 →</a>
@@ -190,7 +190,7 @@
             <p>1,059 篇貼文 · 12 個主題 · 月更 100+</p>
           </div>
         </div>
-        <div class="community-cta">想加入稀飯 LINE 封閉社群？月 NT$ 299 ↗</div>
+        <div class="community-cta">加入稀飯付費社團（APP 內）· 月 NT$ 299 ↗</div>
       </div>
 
       <div class="filter-chips" id="community-tabs">
@@ -225,6 +225,27 @@
       </div>
     </section>
 
+    <!-- ─────────── RATING (主動式 ETF 評等) ─────────── -->
+    <section id="view-rating" class="view">
+      <div class="rating-hero">
+        <h2>🏆 稀飯 ETF 評等</h2>
+        <p>台股主動式 ETF · 公式公開 · 資料可稽核</p>
+      </div>
+
+      <div class="card" style="font-size:12px;color:#4b5563;line-height:1.7">
+        <b style="color:#111827">評等方法（權重公開，付費不能改分數）</b><br>
+        績效 30%（含息報酬）· 風險 20%（波動/回撤）· 配息品質 20%（填息率/來源）· 費用 15% · 規模流動性 15%<br>
+        <span style="color:#9ca3af">等級：S（≥85）/ A（75-84）/ B（65-74）/ C（&lt;65）/ N（新檔觀察中，資料未滿一季不評）</span>
+      </div>
+
+      <div id="rating-list"></div>
+
+      <div class="alloc-disclaimer">
+        <b>⚠️ 免責聲明</b><br>
+        評等為資訊整理（基於公開資料 + 稀飯文章觀點之 prototype 示範），非投資建議或推介。分數與等級不代表未來績效，投資前請詳閱公開說明書。
+      </div>
+    </section>
+
     <!-- ─────────── MONETIZE ─────────── -->
     <section id="view-monetize" class="view">
       <div class="monet-hero">
@@ -246,52 +267,38 @@
         <a href="#calc" class="monet-cta" data-view-link>試用試算機</a>
       </div>
 
-      <!-- 2. eBook -->
-      <div class="monet-card">
-        <div class="monet-card-header">
-          <div class="monet-card-icon">📖</div>
-          <div class="monet-card-meta">
-            <div class="monet-card-name">《ETF 配息實務手冊》電子書</div>
-            <span class="monet-card-tag tag-product">電子書 · PDF</span>
-          </div>
-          <div class="monet-card-price">NT$ 590</div>
-        </div>
-        <div class="monet-card-desc">120 頁濃縮 1,000+ 篇貼文精華。8 大章：市值 / 高股息 / 債券 / 主動式 ETF / 配息策略 / 補充保費 / 退休規劃 / 進階配置。</div>
-        <div class="monet-card-stat">📊 已 30 人購買 · 4.7 ★ 評價</div>
-        <a href="#" class="monet-cta" onclick="showToast('Prototype — 真實購買連結待接 Money 錢出版社');return false;">立即購買</a>
-      </div>
-
-      <!-- 3. Course -->
+      <!-- 2. Course -->
       <div class="monet-card">
         <div class="monet-card-header">
           <div class="monet-card-icon">🎓</div>
           <div class="monet-card-meta">
             <div class="monet-card-name">《ETF 配息策略入門》課程</div>
-            <span class="monet-card-tag tag-course">Hahow · 線上影片</span>
+            <span class="monet-card-tag tag-course">CMoney · 線上課程</span>
           </div>
-          <div class="monet-card-price">NT$ 1,990</div>
+          <div class="monet-card-price">NT$ 2,990</div>
         </div>
         <div class="monet-card-desc">5 小時影片 + 工作表，學會看懂主動式 ETF、估算填息率、規劃年度配息現金流。</div>
         <div class="monet-card-stat">🎓 5 人已報名 · 12 章節 · 終身觀看</div>
-        <a href="#" class="monet-cta" onclick="showToast('Prototype — 將上架 Hahow / PressPlay');return false;">立即報名</a>
+        <a href="#" class="monet-cta" onclick="showToast('Prototype — 將上架 CMoney 課程平台');return false;">立即報名</a>
       </div>
 
-      <!-- 4. Subscription -->
+      <!-- 3. In-app paid community -->
       <div class="monet-card">
         <div class="monet-card-header">
           <div class="monet-card-icon">💎</div>
           <div class="monet-card-meta">
-            <div class="monet-card-name">LINE 封閉社群 · 付費版</div>
+            <div class="monet-card-name">稀飯付費社團（APP 內）</div>
             <span class="monet-card-tag tag-sub">每月訂閱</span>
           </div>
           <div class="monet-card-price">NT$ 299<span style="font-size:13px;font-weight:normal;color:#6b7280">/月起</span></div>
         </div>
-        <div class="monet-card-desc">每日盤後 ETF 點評、配息預估提前 24 小時、月度持股 portfolio 更新。50 人已訂閱。</div>
+        <div class="monet-card-desc">APP 內專屬社團：每日盤後 ETF 點評、配息預估提前 24 小時推播、VIP 文章解鎖、月度持股公開。50 人已加入。</div>
         <div class="monet-cta tier-row">
           <a href="#" class="tier" onclick="showToast('Prototype — 月訂閱方案');return false;">月 NT$ 299</a>
           <a href="#" class="tier recommended" onclick="showToast('Prototype — 季訂閱方案');return false;">季 NT$ 799</a>
           <a href="#" class="tier" onclick="showToast('Prototype — 年訂閱方案');return false;">年 NT$ 2,790</a>
         </div>
+        <a href="#community" class="monet-cta" data-view-link style="margin-top:8px;background:#1f2937">先逛逛社團 →</a>
       </div>
 
       <!-- 5. Affiliate -->
@@ -330,23 +337,23 @@
       <div class="section-title">營收結構</div>
       <div class="kpi-grid">
         <div class="kpi">
-          <div class="kpi-label">💎 LINE 訂閱</div>
+          <div class="kpi-label">💎 APP 付費社團</div>
           <div class="kpi-val">50 人</div>
           <div class="kpi-sub">月入 NT$ 14,950</div>
         </div>
         <div class="kpi">
-          <div class="kpi-label">📖 電子書</div>
-          <div class="kpi-val">30 本/月</div>
-          <div class="kpi-sub">月入 NT$ 17,700</div>
+          <div class="kpi-label">🏦 券商導購 CPA</div>
+          <div class="kpi-val">18 戶/月</div>
+          <div class="kpi-sub">月入 NT$ 12,600</div>
         </div>
         <div class="kpi">
-          <div class="kpi-label">🎓 課程</div>
+          <div class="kpi-label">🎓 課程 (NT$2,990)</div>
           <div class="kpi-val">5 人/月</div>
-          <div class="kpi-sub">月入 NT$ 9,950</div>
+          <div class="kpi-sub">月入 NT$ 14,950</div>
         </div>
         <div class="kpi">
-          <div class="kpi-label">🏦 業配</div>
-          <div class="kpi-val">1.5 個/月</div>
+          <div class="kpi-label">📢 投信業配</div>
+          <div class="kpi-val">1.5 檔/月</div>
           <div class="kpi-sub">月均 NT$ 7,500</div>
         </div>
       </div>
@@ -356,7 +363,7 @@
         <div class="card-title">📚 1,059 篇 ETF 貼文</div>
         <div class="card-summary">
           IG 465 篇（32.1 個月跨度）+ FB 594 篇（11.9 個月跨度）<br>
-          結構化為 12 個主題知識庫，可包裝成課程 / 電子書 / 訂閱情報。
+          結構化為 12 個主題知識庫，可包裝成課程 / ETF 評等 / 社團訂閱情報。
         </div>
       </div>
       <div class="card">
@@ -366,13 +373,14 @@
         </div>
       </div>
 
-      <div class="section-title">受眾數據 (待補實際)</div>
+      <div class="section-title">受眾數據</div>
       <div class="card">
         <div class="card-summary" style="font-size:12px;color:#6b7280">
-          <i>📌 此區數字待稀飯本人提供確認</i><br><br>
-          <b>FB 粉絲：</b>[實際數字待補] · 預估 30,000-60,000<br>
-          <b>IG 粉絲：</b>[實際數字待補] · 預估 10,000-30,000<br>
-          <b>LINE 社群目前人數：</b>[實際數字待補]
+          <i>📌 來源：本人自介頁公開宣告（時點可能略舊，正式合作前再向本人確認）</i><br><br>
+          <b>IG 粉絲：</b>約 7,500+<br>
+          <b>FB 粉絲：</b>約 3,600+<br>
+          <b>現有 LINE 社群人數：</b>[待本人確認]<br><br>
+          → micro-influencer 量級：價值在「內容引擎 + 利基 SEO + 轉換率」，不在觸及量。流量分母由 CMoney 補。
         </div>
       </div>
 
@@ -411,6 +419,7 @@
 
   <nav class="bottom-nav">
     <a href="#home" class="nav-link active" data-view="home"><span class="icon">🛠️</span>工具</a>
+    <a href="#rating" class="nav-link" data-view="rating"><span class="icon">🏆</span>評等</a>
     <a href="#library" class="nav-link" data-view="library"><span class="icon">📚</span>知識</a>
     <a href="#allocation" class="nav-link" data-view="allocation"><span class="icon">🎯</span>配置</a>
     <a href="#community" class="nav-link" data-view="community"><span class="icon">👥</span>社團</a>
@@ -420,8 +429,8 @@
 
 </div>
 
-<script src="data/data.js?v=10"></script>
-<script src="data/etfs_extended.js?v=10"></script>
-<script src="js/app.js?v=10"></script>
+<script src="data/data.js?v=11"></script>
+<script src="data/etfs_extended.js?v=11"></script>
+<script src="js/app.js?v=11"></script>
 </body>
 </html>

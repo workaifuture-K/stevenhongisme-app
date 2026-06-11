@@ -87,6 +87,7 @@ function showView(viewName, param) {
     case 'watchlist': renderWatchlist(); break;
     case 'allocation': renderAllocation(); break;
     case 'community': renderCommunity(); break;
+    case 'rating': renderRating(); break;
   }
 
   // Scroll to top
@@ -261,7 +262,7 @@ function renderPost(postId) {
     ${relatedHtml}
     <div class="upsell">
       <b>📥 想看更深入分析？</b><br>
-      <span style="font-size:12px">加入稀飯 LINE 封閉社群，每日盤後 ETF 點評、配息預估提前 24 小時推送。</span><br>
+      <span style="font-size:12px">加入稀飯付費社團（APP 內），每日盤後 ETF 點評、配息預估提前 24 小時推播。</span><br>
       <a href="#monetize" class="upsell-cta" data-view-link>看訂閱方案 →</a>
     </div>
   `;
@@ -619,6 +620,92 @@ function renderAllocation() {
   `;
 }
 
+// ─── Rating (主動式 ETF 評等) ─────────────────────────────────
+// 數據基底：稀飯 2026-04/05 文章中實際提到的報酬/配息/規模數字（prototype 整理）
+// 分數 = 績效30% + 風險20% + 配息20% + 費用15% + 規模15%（公式公開）
+const RATING_DATA = [
+  { code: '00981A', name: '主動統一台股增長', grade: 'S', ytd: '+67.2%',
+    scores: { perf: 95, risk: 55, div: 78, fee: 58, scale: 96 },
+    comment: '人氣王。發行價 10 元一路漲到 30 元，首配 0.41 全資本利得免補保費。費用率偏高是代價。' },
+  { code: '00994A', name: '主動第一金台股優', grade: 'S', ytd: '+68.2%',
+    scores: { perf: 96, risk: 55, div: 62, fee: 65, scale: 62 },
+    comment: '黑馬冠軍。討論度不高但績效霸榜一段時間，低調的實力派。' },
+  { code: '00991A', name: '主動復華未來50', grade: 'S', ytd: '+68.6%',
+    scores: { perf: 94, risk: 45, div: 60, fee: 64, scale: 80 },
+    comment: '科技主攻型「未來的台灣50」。能買上櫃股是它對 0050 的最大優勢，波動也是同類最高。' },
+  { code: '00982A', name: '主動群益台灣強棒', grade: 'A', ytd: '+51.8%',
+    scores: { perf: 85, risk: 60, div: 92, fee: 63, scale: 74 },
+    comment: '配息模範生：0.236→0.334→0.377→0.64 季季調升、填息率 100%、全資本利得。' },
+  { code: '00980A', name: '主動野村臺灣優選', grade: 'A', ytd: '+56.2%',
+    scores: { perf: 86, risk: 62, div: 84, fee: 64, scale: 75 },
+    comment: '績效配息兩頭兼顧，配息連兩季成長。野村雙檔中的主力。' },
+  { code: '00992A', name: '主動群益科技創新', grade: 'A', ytd: '+66.6%',
+    scores: { perf: 93, risk: 42, div: 50, fee: 60, scale: 64 },
+    comment: '純科技衝鋒隊，跟 00981A 一路纏鬥。首次評價不分配，要領息的不適合。' },
+  { code: '00985A', name: '主動野村台灣50', grade: 'A', ytd: '+34.1%',
+    scores: { perf: 75, risk: 76, div: 66, fee: 68, scale: 70 },
+    comment: '三檔「進化版台灣50」中最防守：台積電 27% + 金融傳產壓艙，波動理論上最低。' },
+  { code: '00995A', name: '主動中信台灣卓越', grade: 'B', ytd: '+60%±',
+    scores: { perf: 82, risk: 55, div: 60, fee: 62, scale: 66 },
+    comment: '跟前段班差距咬很近，但還沒拉出自己的識別度。' },
+  { code: '00984A', name: '主動安聯台灣高息', grade: 'B', ytd: '+29.2%',
+    scores: { perf: 70, risk: 70, div: 72, fee: 64, scale: 58 },
+    comment: '首檔主動高息。同期贏 0056/00919，但首配動用 52% 平準金要再觀察。' },
+  { code: '00403A', name: '主動統一升級50', grade: 'N', ytd: '掛牌未滿季',
+    scores: { perf: 0, risk: 50, div: 50, fee: 60, scale: 98 },
+    comment: '掛牌 3 天規模衝 1,500 億的怪物新兵。股票部位才 76%，溢價一度 3.4%——等建倉完再評。' },
+  { code: '00999A', name: '主動野村臺灣高息', grade: 'N', ytd: '掛牌未滿季',
+    scores: { perf: 0, risk: 55, div: 60, fee: 64, scale: 45 },
+    comment: '高息+成長雙拼新兵，與 00980A 同經理人。9 月首配前先觀察。' },
+];
+
+const GRADE_STYLE = {
+  S: { bg: 'linear-gradient(135deg,#f59e0b,#d97706)' },
+  A: { bg: 'linear-gradient(135deg,#10b981,#059669)' },
+  B: { bg: 'linear-gradient(135deg,#3b82f6,#2563eb)' },
+  C: { bg: 'linear-gradient(135deg,#9ca3af,#6b7280)' },
+  N: { bg: 'linear-gradient(135deg,#8b5cf6,#7c3aed)' },
+};
+
+const DIM_LABELS = { perf: '績效', risk: '風險', div: '配息', fee: '費用', scale: '規模' };
+
+function renderRating() {
+  const order = { S: 0, A: 1, B: 2, C: 3, N: 4 };
+  const sorted = [...RATING_DATA].sort((a, b) => order[a.grade] - order[b.grade]);
+
+  const html = sorted.map(r => {
+    const g = GRADE_STYLE[r.grade];
+    const bars = Object.keys(DIM_LABELS).map(k => {
+      const v = r.scores[k];
+      return `
+        <div class="rate-dim">
+          <div class="rate-dim-label">${DIM_LABELS[k]}</div>
+          <div class="rate-dim-bar"><div class="rate-dim-fill" style="width:${v}%"></div></div>
+          <div class="rate-dim-val">${v > 0 ? v : '—'}</div>
+        </div>`;
+    }).join('');
+    return `
+      <div class="rate-card" onclick="showToast('${r.code} 完整評等理由 — 付費社團解鎖（mock）')">
+        <div class="rate-head">
+          <div class="grade-badge" style="background:${g.bg}">${r.grade}</div>
+          <div class="rate-meta">
+            <div class="rate-code">${r.code} <span class="rate-name">${escapeHtml(r.name)}</span></div>
+            <div class="rate-ytd">今年以來 <b>${r.ytd}</b></div>
+          </div>
+        </div>
+        <div class="rate-dims">${bars}</div>
+        <div class="rate-comment">🍚 ${escapeHtml(r.comment)}</div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('rating-list').innerHTML = html + `
+    <div class="upsell" style="margin-top:16px">
+      <b>🔓 想看完整評等理由 + 調級即時通知？</b><br>
+      <span style="font-size:12px">加入稀飯付費社團（APP 內），評級異動第一時間推播給你。</span><br>
+      <a href="#monetize" class="upsell-cta" data-view-link>查看訂閱方案 →</a>
+    </div>`;
+}
+
 // ─── Community (社團) — 3 sub-sections ──────────────────────
 let currentCommunitySub = 'profile';
 
@@ -699,7 +786,7 @@ function renderProfileSub() {
       <a href="#" onclick="showToast('方格子 - stevenhongisme');return false;" class="platform-pill">📰 方格子</a>
       <a href="#" onclick="showToast('股市爆料同學會');return false;" class="platform-pill">📈 股市爆料同學會</a>
       <a href="#" onclick="showToast('傳送門 - stevenhongisme');return false;" class="platform-pill">🌐 傳送門</a>
-      <a href="#" onclick="showToast('LINE 封閉社群 (付費)');return false;" class="platform-pill highlight">💎 LINE 封閉社群</a>
+      <a href="#" onclick="showToast('付費社團就在本 APP 的「社團」分頁');return false;" class="platform-pill highlight">💎 付費社團（本 APP）</a>
     </div>
 
     <div class="section-title">❓ 常見問題</div>
@@ -716,8 +803,8 @@ function renderProfileSub() {
       <p><b>⚠️ 不會！</b>稀飯只經營部落格、FB、IG、Dcard、方格子、股市爆料同學會、傳送門、LINE 封閉社群。<b>不會私訊邀請加入飆股群組</b>，也請勿點擊來路不明的連結。看到都是假冒的 ✋</p>
     </details>
     <details class="qa">
-      <summary>為什麼要付費加入 LINE 社群？</summary>
-      <p>免費公開內容是「報導」，LINE 封閉社群是「解讀」。提前 24 小時收到配息預估、每日盤後 ETF 點評、月度持股 portfolio 揭露 — 給願意付月 NT$ 299 的鐵粉。</p>
+      <summary>為什麼要加入付費社團？</summary>
+      <p>免費公開內容是「報導」，APP 付費社團是「解讀」。提前 24 小時收到配息預估推播、每日盤後 ETF 點評、月度持股 portfolio 揭露 — 給願意付月 NT$ 299 的鐵粉。</p>
     </details>
   `;
 }
@@ -767,10 +854,10 @@ function renderVipSub() {
 // 聊天室
 function renderChatSub() {
   const messages = [
-    { who: 'host', name: '稀飯', avatar: '🍚', text: '📌 公告：明天 (5/28) 直播解讀 0050 換股結果，晚上 20:00 LINE 群開講，記得設提醒！', time: '10:32', pinned: true },
+    { who: 'host', name: '稀飯', avatar: '🍚', text: '📌 公告：明天 (5/28) 直播解讀 0050 換股結果，晚上 20:00 社團直播開講，記得設提醒！', time: '10:32', pinned: true },
     { who: 'user', name: '存股族阿明', text: '請問月配 ETF 跟季配怎麼選比較好？', time: '11:05' },
     { who: 'host', name: '稀飯', avatar: '🍚', text: '@存股族阿明 看你的現金流需求！如果你已經退休要每月有錢花 → 月配；如果還在累積階段 → 季配填息率通常比較好。我寫過一篇分析👇', time: '11:08' },
-    { who: 'host', name: '稀飯', avatar: '🍚', text: '👉 [月配 vs 季配完整比較] - 5/15 發在 LINE 社群獨家', time: '11:08', isLink: true },
+    { who: 'host', name: '稀飯', avatar: '🍚', text: '👉 [月配 vs 季配完整比較] - 5/15 發在付費社團獨家', time: '11:08', isLink: true },
     { who: 'user', name: '小美', text: '00919 這次 0.78 創新高耶！要不要追？', time: '11:23' },
     { who: 'user', name: '飯友 K', text: '配得多不一定是好事 要看填息率啊', time: '11:25' },
     { who: 'host', name: '稀飯', avatar: '🍚', text: '@小美 對，00919 這次配很猛！我自己抱著沒賣，但提醒大家：高股息追高要小心追到除息高點 ⚠️', time: '11:28' },
@@ -800,7 +887,7 @@ function renderChatSub() {
   return `
     <div class="chat-header">
       <div>
-        <div class="chat-title">💎 LINE 封閉社群</div>
+        <div class="chat-title">💎 稀飯付費社團</div>
         <div class="chat-sub">當前 50 人 · 24 小時內 23 則訊息</div>
       </div>
       <div class="chat-online">● 在線</div>
