@@ -782,10 +782,8 @@ function renderProfileSub() {
       <a href="https://stevenhongisme.com" target="_blank" class="platform-pill">📝 部落格</a>
       <a href="https://www.facebook.com/stevenhongisme" target="_blank" class="platform-pill">📘 Facebook</a>
       <a href="https://www.instagram.com/steven.is.me_" target="_blank" class="platform-pill">📸 Instagram</a>
-      <a href="#" onclick="showToast('Dcard - @stevenhongisme');return false;" class="platform-pill">💬 Dcard</a>
-      <a href="#" onclick="showToast('方格子 - stevenhongisme');return false;" class="platform-pill">📰 方格子</a>
-      <a href="#" onclick="showToast('股市爆料同學會');return false;" class="platform-pill">📈 股市爆料同學會</a>
-      <a href="#" onclick="showToast('傳送門 - stevenhongisme');return false;" class="platform-pill">🌐 傳送門</a>
+      <a href="https://vocus.cc/user/@stevenhongisme" target="_blank" class="platform-pill">📰 方格子</a>
+      <a href="https://www.cmoney.tw/forum/user/6338042" target="_blank" class="platform-pill">📈 股市爆料同學會</a>
       <a href="#" onclick="showToast('付費社團就在本 APP 的「社團」分頁');return false;" class="platform-pill highlight">💎 付費社團（本 APP）</a>
     </div>
 
@@ -800,7 +798,7 @@ function renderProfileSub() {
     </details>
     <details class="qa">
       <summary>稀飯會私訊我嗎？</summary>
-      <p><b>⚠️ 不會！</b>稀飯只經營部落格、FB、IG、Dcard、方格子、股市爆料同學會、傳送門、LINE 封閉社群。<b>不會私訊邀請加入飆股群組</b>，也請勿點擊來路不明的連結。看到都是假冒的 ✋</p>
+      <p><b>⚠️ 不會！</b>稀飯只經營部落格、FB、IG、方格子、股市爆料同學會，以及本 APP 的付費社團。<b>不會私訊邀請加入飆股群組</b>，也請勿點擊來路不明的連結。看到都是假冒的 ✋</p>
     </details>
     <details class="qa">
       <summary>為什麼要加入付費社團？</summary>
