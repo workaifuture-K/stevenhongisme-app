@@ -26,7 +26,7 @@
     </div>
   </header>
 
-  <div class="mock-banner">📌 Prototype v1.4 — 所有數字為示範用途，非實際資料（更新：2026-06-11）</div>
+  <div class="mock-banner">📌 Prototype v1.5 — 補充保費試算機已接 CMoney 真實 ETF 配息資料（202 檔）</div>
 
   <main>
     <!-- ─────────── HOME ─────────── -->
@@ -39,7 +39,7 @@
         <div class="ft-meta">
           <div class="ft-badge">最受歡迎</div>
           <div class="ft-title">補充保費試算機</div>
-          <div class="ft-desc">選 ETF + 持有張數 → 立刻算出單期配息 / 是否課 2.11% 補充保費 / 需持有多少張會觸發</div>
+          <div class="ft-desc">選 ETF + 持有部位（含零股）→ 立刻算出是否課 2.11% 補充保費 / 需持有多少張股會觸發。配息資料接 CMoney 真實 202 檔。</div>
           <div class="ft-cta">立即試算 →</div>
         </div>
       </a>
@@ -95,14 +95,16 @@
     <section id="view-calc" class="view">
       <div class="calc-hero">
         <h2>🧮 補充保費試算機</h2>
-        <p>選一檔 ETF + 輸入持有張數 → 立刻算出單期配息、是否被課補充保費</p>
+        <p>選一檔 ETF + 持有部位 → 立刻算出是否被課補充保費。配息資料來自最新一期實際配發。</p>
       </div>
 
       <div class="calc-form">
-        <label for="calc-etf">ETF / 個股</label>
-        <select id="calc-etf"></select>
+        <label for="calc-etf-search">選擇 ETF</label>
+        <input type="text" id="calc-etf-search" placeholder="輸入代號或名稱搜尋，例如 0056 或 高股息" autocomplete="off">
+        <div id="calc-etf-dropdown" class="etf-dropdown"></div>
+        <div id="calc-etf-selected" class="etf-selected">尚未選擇</div>
 
-        <label>持有部位（含零股）</label>
+        <label style="margin-top:14px">持有部位（含零股）</label>
         <div style="display:flex;gap:8px;align-items:center">
           <div style="flex:1">
             <input type="number" id="calc-shares" min="0" max="99999" value="20" style="width:100%">
@@ -114,23 +116,28 @@
             <div style="font-size:11px;color:#9ca3af;text-align:center;margin-top:2px">股（零股，0-999）</div>
           </div>
         </div>
-
-        <label for="calc-dividend">每股配息（元）<span style="font-weight:normal;color:#9ca3af">— 預設值可改</span></label>
-        <input type="number" id="calc-dividend" step="0.01" min="0" value="1.00">
       </div>
 
       <div class="calc-result">
         <div class="calc-result-row">
-          <span class="calc-result-label">單期配息總額</span>
-          <span class="calc-result-val" id="calc-total">NT$ 20,000</span>
+          <span class="calc-result-label">本期每股配發</span>
+          <span class="calc-result-val" id="calc-divval" style="font-size:15px">—</span>
+        </div>
+        <div class="calc-result-row">
+          <span class="calc-result-label">配息總額</span>
+          <span class="calc-result-val" id="calc-total">—</span>
+        </div>
+        <div class="calc-result-row">
+          <span class="calc-result-label">其中股利所得（課保費基礎）</span>
+          <span class="calc-result-val" id="calc-incomebase" style="font-size:15px">—</span>
         </div>
         <div class="calc-result-row">
           <span class="calc-result-label">是否觸發補充保費</span>
-          <span class="calc-result-val" id="calc-trigger">否</span>
+          <span class="calc-result-val" id="calc-trigger">—</span>
         </div>
         <div class="calc-result-row">
           <span class="calc-result-label">補充保費金額 (2.11%)</span>
-          <span class="calc-result-val" id="calc-fee">NT$ 0</span>
+          <span class="calc-result-val" id="calc-fee">—</span>
         </div>
         <div class="calc-result-row">
           <span class="calc-result-label">超過多少張股會觸發</span>
@@ -140,8 +147,10 @@
         <div class="threshold-bar">
           <div class="threshold-bar-fill" id="calc-bar" style="width:0%"></div>
         </div>
-        <div class="threshold-marker">NT$ 20,000 門檻</div>
+        <div class="threshold-marker">股利所得 NT$ 20,000 門檻</div>
       </div>
+
+      <div class="calc-note" id="calc-note"></div>
 
       <div class="upsell">
         <b>📥 加入稀飯付費社團，解鎖完整版工具</b><br>
@@ -420,8 +429,9 @@
 
 </div>
 
-<script src="data/data.js?v=14"></script>
-<script src="data/etfs_extended.js?v=14"></script>
-<script src="js/app.js?v=14"></script>
+<script src="data/data.js?v=15"></script>
+<script src="data/etfs_extended.js?v=15"></script>
+<script src="data/etf_dividends.js?v=15"></script>
+<script src="js/app.js?v=15"></script>
 </body>
 </html>

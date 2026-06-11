@@ -269,90 +269,134 @@ function renderPost(postId) {
 }
 
 // ─── Calculator ──────────────────────────────────────────────
-// Typical dividend per share per payout (rough estimates for prototype)
-const ETF_TYPICAL_DIVIDEND = {
-  '0050': 1.00,    // 半年配 ~1元/股
-  '006208': 1.40,
-  '0056': 0.866,   // 季配
-  '00878': 0.42,
-  '00919': 0.78,
-  '00929': 0.09,   // 月配
-  '00713': 0.78,
-  '00918': 0.565,
-  '00891': 0.60,
-  '00927': 0.91,
-  '00981A': 0.41,
-  '00403A': 0,      // 首配未公佈
-  '2330': 6.00,    // 季配（年4次，每次估6元）
-  '2317': 5.50,
-  '2308': 14.00,
-  '2454': 24.00,
-};
+// 資料來源：window.ETF_DIVIDENDS（CMoney SQL 真實配息資料，202 檔，每檔最新一期）
+// 補充保費只課「股利所得 + 利息所得」那部分，不是整筆配息
+let calcSelectedEtf = null;
 
-function initCalc() {
-  const sel = document.getElementById('calc-etf');
-  if (sel.options.length === 0) {
-    // Populate options once
-    State.etfs.forEach(e => {
-      const opt = document.createElement('option');
-      opt.value = e.code;
-      opt.textContent = `${e.code} ${e.name}`;
-      opt.dataset.dividend = ETF_TYPICAL_DIVIDEND[e.code] || 1.0;
-      sel.appendChild(opt);
-    });
-    sel.value = '0050';
-
-    sel.addEventListener('change', onCalcEtfChange);
-    document.getElementById('calc-shares').addEventListener('input', recalc);
-    document.getElementById('calc-odd').addEventListener('input', recalc);
-    document.getElementById('calc-dividend').addEventListener('input', recalc);
-  }
-  // Set initial dividend
-  onCalcEtfChange();
-  recalc();
+function getEtfDividends() {
+  return (window.ETF_DIVIDENDS || []);
 }
 
-function onCalcEtfChange() {
-  const sel = document.getElementById('calc-etf');
-  const opt = sel.options[sel.selectedIndex];
-  document.getElementById('calc-dividend').value = opt.dataset.dividend || '1.00';
+function fmtExDate(s) {
+  if (!s || s.length !== 8) return '';
+  return `${s.slice(0,4)}/${s.slice(4,6)}/${s.slice(6,8)}`;
+}
+
+function initCalc() {
+  const searchEl = document.getElementById('calc-etf-search');
+  if (!searchEl.dataset.bound) {
+    searchEl.dataset.bound = '1';
+    searchEl.addEventListener('input', onCalcSearch);
+    searchEl.addEventListener('focus', onCalcSearch);
+    document.getElementById('calc-shares').addEventListener('input', recalc);
+    document.getElementById('calc-odd').addEventListener('input', recalc);
+    // 點 dropdown 外面關閉
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#calc-etf-search') && !e.target.closest('#calc-etf-dropdown')) {
+        document.getElementById('calc-etf-dropdown').style.display = 'none';
+      }
+    });
+  }
+  // 預設選 0056（高股息代表）
+  if (!calcSelectedEtf) {
+    const def = getEtfDividends().find(e => e.code === '0056') || getEtfDividends()[0];
+    if (def) selectCalcEtf(def);
+  } else {
+    recalc();
+  }
+}
+
+function onCalcSearch() {
+  const q = document.getElementById('calc-etf-search').value.trim().toLowerCase();
+  const dd = document.getElementById('calc-etf-dropdown');
+  let list = getEtfDividends();
+  if (q) {
+    list = list.filter(e => e.code.toLowerCase().includes(q) || e.name.toLowerCase().includes(q));
+  }
+  list = list.slice(0, 30);
+  if (list.length === 0) {
+    dd.innerHTML = '<div class="etf-opt" style="color:#9ca3af">查無 ETF</div>';
+  } else {
+    dd.innerHTML = list.map(e =>
+      `<div class="etf-opt" data-code="${e.code}">
+        <b>${e.code}</b> ${escapeHtml(e.name)}
+        <span class="etf-opt-tag">${e.payout || ''} · 配 ${e.dividend}</span>
+      </div>`
+    ).join('');
+    dd.querySelectorAll('.etf-opt[data-code]').forEach(el => {
+      el.onclick = () => {
+        const etf = getEtfDividends().find(x => x.code === el.dataset.code);
+        if (etf) selectCalcEtf(etf);
+      };
+    });
+  }
+  dd.style.display = 'block';
+}
+
+function selectCalcEtf(etf) {
+  calcSelectedEtf = etf;
+  document.getElementById('calc-etf-search').value = '';
+  document.getElementById('calc-etf-dropdown').style.display = 'none';
+  const incomePct = etf.income_pct != null ? etf.income_pct : null;
+  document.getElementById('calc-etf-selected').innerHTML =
+    `<b>${etf.code} ${escapeHtml(etf.name)}</b>　${etf.payout || ''}<br>
+     <span style="color:#6b7280;font-size:12px">本期每股配發 ${etf.dividend} 元　·　除息 ${fmtExDate(etf.ex_date)}　·　殖利率 ${etf.yield_pct != null ? etf.yield_pct + '%' : '—'}</span>`;
   recalc();
 }
 
 function recalc() {
+  if (!calcSelectedEtf) return;
+  const e = calcSelectedEtf;
   const zhang = parseInt(document.getElementById('calc-shares').value) || 0;
   const odd = parseInt(document.getElementById('calc-odd').value) || 0;
-  const divPerShare = parseFloat(document.getElementById('calc-dividend').value) || 0;
 
-  // 總股數 = 張數 × 1000 + 零股
   const totalShares = zhang * 1000 + odd;
+  const divPerShare = e.dividend;
   const totalDividend = totalShares * divPerShare;
 
-  const threshold = 20000; // 單筆股利達 2 萬元觸發
-  const triggered = totalDividend >= threshold;
-  const fee = triggered ? totalDividend * 0.0211 : 0;
+  // 補充保費只課「股利所得 + 利息所得」占比那部分
+  const incomePct = (e.income_pct || 0) + (e.interest_pct || 0); // %
+  const incomeRatio = incomePct / 100;
+  const taxableBase = totalDividend * incomeRatio; // 真正計入補保費的金額
 
-  // 反推：恰好達到門檻需要的「股數」，再換算成「X 張 Y 股」
-  // 觸發條件是「達到」2 萬（含），所以臨界股數 = ceil(20000 / 每股配息)
-  const sharesToTrigger = divPerShare > 0 ? Math.ceil(threshold / divPerShare) : 0;
+  const threshold = 20000;
+  const triggered = taxableBase >= threshold;
+  const fee = triggered ? taxableBase * 0.0211 : 0;
+
+  // 反推：要讓「股利所得部分」達 2 萬，需要的總股數
+  // taxableBase = totalShares × divPerShare × incomeRatio ≥ 20000
+  const perShareTaxable = divPerShare * incomeRatio;
+  const sharesToTrigger = perShareTaxable > 0 ? Math.ceil(threshold / perShareTaxable) : 0;
   const thZhang = Math.floor(sharesToTrigger / 1000);
   const thOdd = sharesToTrigger % 1000;
 
+  document.getElementById('calc-divval').textContent = `${divPerShare} 元`;
   document.getElementById('calc-total').textContent = `NT$ ${formatNum(totalDividend)}`;
+  document.getElementById('calc-incomebase').textContent =
+    incomePct > 0 ? `NT$ ${formatNum(taxableBase)}（占 ${incomePct}%）` : 'NT$ 0（本期 0% 課稅所得）';
   document.getElementById('calc-trigger').textContent = triggered ? '是 ⚠️' : '否 ✓';
   document.getElementById('calc-trigger').className = 'calc-result-val ' + (triggered ? 'warn' : 'good');
   document.getElementById('calc-fee').textContent = `NT$ ${formatNum(fee)}`;
   document.getElementById('calc-fee').className = 'calc-result-val ' + (triggered ? 'warn' : '');
 
-  // 門檻顯示細到「張 + 股」，零股為 0 時只顯示張
-  let thText = '— 張';
-  if (sharesToTrigger > 0) {
+  let thText = '—';
+  if (perShareTaxable <= 0) {
+    thText = '本期免課 ✓';
+  } else if (sharesToTrigger > 0) {
     thText = thOdd > 0 ? `${formatNum(thZhang)} 張 ${thOdd} 股` : `${formatNum(thZhang)} 張`;
   }
   document.getElementById('calc-threshold').textContent = thText;
 
-  const pctOfThreshold = Math.min(100, (totalDividend / threshold) * 100);
+  const pctOfThreshold = Math.min(100, (taxableBase / threshold) * 100);
   document.getElementById('calc-bar').style.width = pctOfThreshold + '%';
+
+  // 說明文字
+  const note = document.getElementById('calc-note');
+  if (incomePct === 0) {
+    note.innerHTML = `💡 本期 <b>${e.code}</b> 配息 100% 來自資本利得 / 收益平準金，<b>不課補充保費</b>，持有再多張都免。`;
+  } else {
+    note.innerHTML = `💡 補充保費只課「股利所得 + 利息所得」共 <b>${incomePct}%</b>，不是整筆配息。本期 <b>${e.code}</b> 每股 ${divPerShare} 元中，約 ${(perShareTaxable).toFixed(4)} 元計入課稅基礎。`;
+  }
 }
 
 function formatNum(n) {
