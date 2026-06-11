@@ -268,14 +268,13 @@ function renderPost(postId) {
   `;
 }
 
-// ─── Calculator ──────────────────────────────────────────────
-// 資料來源：window.ETF_DIVIDENDS（CMoney SQL 真實配息資料，202 檔，每檔最新一期）
-// 補充保費只課「股利所得 + 利息所得」那部分，不是整筆配息
-let calcSelectedEtf = null;
+// ─── Calculator（多 ETF 投資組合）─────────────────────────────
+// 資料：window.ETF_DIVIDENDS（CMoney SQL，202 檔，每檔最新一期）
+// 補充保費規則：每一筆股利「單獨」判斷股利所得是否 ≥ 2 萬，不是組合加總
+const THRESHOLD = 20000, RATE = 0.0211;
+let calcPortfolio = []; // [{code,name,dividend,income_pct,interest_pct,payout,ex_date,yield_pct,zhang,odd}]
 
-function getEtfDividends() {
-  return (window.ETF_DIVIDENDS || []);
-}
+function getEtfDividends() { return (window.ETF_DIVIDENDS || []); }
 
 function fmtExDate(s) {
   if (!s || s.length !== 8) return '';
@@ -288,120 +287,126 @@ function initCalc() {
     searchEl.dataset.bound = '1';
     searchEl.addEventListener('input', onCalcSearch);
     searchEl.addEventListener('focus', onCalcSearch);
-    document.getElementById('calc-shares').addEventListener('input', recalc);
-    document.getElementById('calc-odd').addEventListener('input', recalc);
-    // 點 dropdown 外面關閉
     document.addEventListener('click', (e) => {
       if (!e.target.closest('#calc-etf-search') && !e.target.closest('#calc-etf-dropdown')) {
         document.getElementById('calc-etf-dropdown').style.display = 'none';
       }
     });
   }
-  // 預設選 0056（高股息代表）
-  if (!calcSelectedEtf) {
-    const def = getEtfDividends().find(e => e.code === '0056') || getEtfDividends()[0];
-    if (def) selectCalcEtf(def);
-  } else {
-    recalc();
+  // 預設帶 0056 + 00878 兩檔當示範
+  if (calcPortfolio.length === 0) {
+    ['0056', '00878'].forEach(c => {
+      const e = getEtfDividends().find(x => x.code === c);
+      if (e) calcPortfolio.push({ ...e, zhang: 50, odd: 0 });
+    });
   }
+  renderCalcPortfolio();
 }
 
 function onCalcSearch() {
   const q = document.getElementById('calc-etf-search').value.trim().toLowerCase();
   const dd = document.getElementById('calc-etf-dropdown');
-  let list = getEtfDividends();
-  if (q) {
-    list = list.filter(e => e.code.toLowerCase().includes(q) || e.name.toLowerCase().includes(q));
-  }
+  let list = getEtfDividends().filter(e => !calcPortfolio.some(p => p.code === e.code));
+  if (q) list = list.filter(e => e.code.toLowerCase().includes(q) || e.name.toLowerCase().includes(q));
   list = list.slice(0, 30);
   if (list.length === 0) {
-    dd.innerHTML = '<div class="etf-opt" style="color:#9ca3af">查無 ETF</div>';
+    dd.innerHTML = '<div class="etf-opt" style="color:#9ca3af">查無可加入的 ETF</div>';
   } else {
     dd.innerHTML = list.map(e =>
       `<div class="etf-opt" data-code="${e.code}">
         <b>${e.code}</b> ${escapeHtml(e.name)}
         <span class="etf-opt-tag">${e.payout || ''} · 配 ${e.dividend}</span>
-      </div>`
-    ).join('');
+      </div>`).join('');
     dd.querySelectorAll('.etf-opt[data-code]').forEach(el => {
       el.onclick = () => {
-        const etf = getEtfDividends().find(x => x.code === el.dataset.code);
-        if (etf) selectCalcEtf(etf);
+        const e = getEtfDividends().find(x => x.code === el.dataset.code);
+        if (e) { calcPortfolio.push({ ...e, zhang: 10, odd: 0 }); renderCalcPortfolio(); }
+        document.getElementById('calc-etf-search').value = '';
+        document.getElementById('calc-etf-dropdown').style.display = 'none';
       };
     });
   }
   dd.style.display = 'block';
 }
 
-function selectCalcEtf(etf) {
-  calcSelectedEtf = etf;
-  document.getElementById('calc-etf-search').value = '';
-  document.getElementById('calc-etf-dropdown').style.display = 'none';
-  const incomePct = etf.income_pct != null ? etf.income_pct : null;
-  document.getElementById('calc-etf-selected').innerHTML =
-    `<b>${etf.code} ${escapeHtml(etf.name)}</b>　${etf.payout || ''}<br>
-     <span style="color:#6b7280;font-size:12px">本期每股配發 ${etf.dividend} 元　·　除息 ${fmtExDate(etf.ex_date)}　·　殖利率 ${etf.yield_pct != null ? etf.yield_pct + '%' : '—'}</span>`;
-  recalc();
+function calcOneEtf(p) {
+  const totalShares = (p.zhang || 0) * 1000 + (p.odd || 0);
+  const totalDiv = totalShares * p.dividend;
+  const incomePct = (p.income_pct || 0) + (p.interest_pct || 0);
+  const taxable = totalDiv * incomePct / 100;
+  const triggered = taxable >= THRESHOLD;
+  const fee = triggered ? taxable * RATE : 0;
+  const perShareTaxable = p.dividend * incomePct / 100;
+  const sharesToTrigger = perShareTaxable > 0 ? Math.ceil(THRESHOLD / perShareTaxable) : 0;
+  return { totalShares, totalDiv, incomePct, taxable, triggered, fee, perShareTaxable, sharesToTrigger };
 }
 
-function recalc() {
-  if (!calcSelectedEtf) return;
-  const e = calcSelectedEtf;
-  const zhang = parseInt(document.getElementById('calc-shares').value) || 0;
-  const odd = parseInt(document.getElementById('calc-odd').value) || 0;
-
-  const totalShares = zhang * 1000 + odd;
-  const divPerShare = e.dividend;
-  const totalDividend = totalShares * divPerShare;
-
-  // 補充保費只課「股利所得 + 利息所得」占比那部分
-  const incomePct = (e.income_pct || 0) + (e.interest_pct || 0); // %
-  const incomeRatio = incomePct / 100;
-  const taxableBase = totalDividend * incomeRatio; // 真正計入補保費的金額
-
-  const threshold = 20000;
-  const triggered = taxableBase >= threshold;
-  const fee = triggered ? taxableBase * 0.0211 : 0;
-
-  // 反推：要讓「股利所得部分」達 2 萬，需要的總股數
-  // taxableBase = totalShares × divPerShare × incomeRatio ≥ 20000
-  const perShareTaxable = divPerShare * incomeRatio;
-  const sharesToTrigger = perShareTaxable > 0 ? Math.ceil(threshold / perShareTaxable) : 0;
-  const thZhang = Math.floor(sharesToTrigger / 1000);
-  const thOdd = sharesToTrigger % 1000;
-
-  document.getElementById('calc-divval').textContent = `${divPerShare} 元`;
-  document.getElementById('calc-total').textContent = `NT$ ${formatNum(totalDividend)}`;
-  document.getElementById('calc-incomebase').textContent =
-    incomePct > 0 ? `NT$ ${formatNum(taxableBase)}（占 ${incomePct}%）` : 'NT$ 0（本期 0% 課稅所得）';
-  document.getElementById('calc-trigger').textContent = triggered ? '是 ⚠️' : '否 ✓';
-  document.getElementById('calc-trigger').className = 'calc-result-val ' + (triggered ? 'warn' : 'good');
-  document.getElementById('calc-fee').textContent = `NT$ ${formatNum(fee)}`;
-  document.getElementById('calc-fee').className = 'calc-result-val ' + (triggered ? 'warn' : '');
-
-  let thText = '—';
-  if (perShareTaxable <= 0) {
-    thText = '本期免課 ✓';
-  } else if (sharesToTrigger > 0) {
-    thText = thOdd > 0 ? `${formatNum(thZhang)} 張 ${thOdd} 股` : `${formatNum(thZhang)} 張`;
+function renderCalcPortfolio() {
+  const wrap = document.getElementById('calc-portfolio');
+  if (calcPortfolio.length === 0) {
+    wrap.innerHTML = '<div class="calc-empty">尚未加入 ETF — 用上方搜尋加入你持有的 ETF</div>';
+    document.getElementById('calc-summary').style.display = 'none';
+    document.getElementById('calc-note').innerHTML = '';
+    return;
   }
-  document.getElementById('calc-threshold').textContent = thText;
 
-  const pctOfThreshold = Math.min(100, (taxableBase / threshold) * 100);
-  document.getElementById('calc-bar').style.width = pctOfThreshold + '%';
+  wrap.innerHTML = calcPortfolio.map((p, i) => {
+    const r = calcOneEtf(p);
+    const thZ = Math.floor(r.sharesToTrigger / 1000), thO = r.sharesToTrigger % 1000;
+    let thText = r.perShareTaxable <= 0 ? '本期免課' : (thO > 0 ? `${formatNum(thZ)}張${thO}股` : `${formatNum(thZ)}張`);
+    const estTag = p.ratio_estimated ? `<span class="cp-est" title="最新期占比未公告，沿用 ${p.ratio_period ? p.ratio_period.slice(0,6) : '上期'}">占比估</span>` : '';
+    return `
+      <div class="cp-card ${r.triggered ? 'triggered' : ''}">
+        <div class="cp-head">
+          <div>
+            <span class="cp-code">${p.code}</span> <span class="cp-name">${escapeHtml(p.name)}</span>
+            <div class="cp-sub">${p.payout || ''} · 每股配 ${p.dividend} 元 · 股利所得 ${r.incomePct}% ${estTag}</div>
+          </div>
+          <button class="cp-del" onclick="removeCalcEtf(${i})">×</button>
+        </div>
+        <div class="cp-inputs">
+          <div class="cp-inp"><input type="number" min="0" max="99999" value="${p.zhang}" oninput="updateCalcEtf(${i},'zhang',this.value)"><span>張</span></div>
+          <div class="cp-plus">＋</div>
+          <div class="cp-inp"><input type="number" min="0" max="999" value="${p.odd}" oninput="updateCalcEtf(${i},'odd',this.value)"><span>股</span></div>
+        </div>
+        <div class="cp-result ${r.triggered ? 'warn' : 'good'}">
+          ${r.incomePct === 0
+            ? `✓ 本期 0% 股利所得，免補保費（持有再多都免）`
+            : r.triggered
+              ? `⚠️ 課稅基礎 NT$ ${formatNum(r.taxable)}（≥2萬）→ 補保費 NT$ ${formatNum(r.fee)}`
+              : `✓ 課稅基礎 NT$ ${formatNum(r.taxable)}（未達2萬）· 超過 ${thText} 才觸發`}
+        </div>
+      </div>`;
+  }).join('');
 
-  // 說明文字
-  const note = document.getElementById('calc-note');
-  if (incomePct === 0) {
-    note.innerHTML = `💡 本期 <b>${e.code}</b> 配息 100% 來自資本利得 / 收益平準金，<b>不課補充保費</b>，持有再多張都免。`;
-  } else {
-    note.innerHTML = `💡 補充保費只課「股利所得 + 利息所得」共 <b>${incomePct}%</b>，不是整筆配息。本期 <b>${e.code}</b> 每股 ${divPerShare} 元中，約 ${(perShareTaxable).toFixed(4)} 元計入課稅基礎。`;
-  }
+  // 組合總覽
+  let totalDiv = 0, totalFee = 0, trigCount = 0;
+  calcPortfolio.forEach(p => {
+    const r = calcOneEtf(p);
+    totalDiv += r.totalDiv; totalFee += r.fee; if (r.triggered) trigCount++;
+  });
+  document.getElementById('calc-summary').style.display = '';
+  document.getElementById('calc-total').textContent = `NT$ ${formatNum(totalDiv)}`;
+  document.getElementById('calc-trigcount').textContent = `${trigCount} / ${calcPortfolio.length} 檔`;
+  document.getElementById('calc-trigcount').className = 'calc-result-val ' + (trigCount > 0 ? 'warn' : 'good');
+  document.getElementById('calc-fee').textContent = `NT$ ${formatNum(totalFee)}`;
+  document.getElementById('calc-fee').className = 'calc-result-val ' + (totalFee > 0 ? 'warn' : '');
+
+  document.getElementById('calc-note').innerHTML =
+    `💡 補充保費是「<b>每一筆</b>股利單獨看股利所得有沒有達 2 萬」就課 2.11%，<b>不是把多檔加總</b>。所以分散持有多檔、單檔不超標，就能合法避開。配息與占比為 CMoney 最新一期實際資料。`;
 }
 
-function formatNum(n) {
-  return Math.round(n).toLocaleString('en-US');
+function updateCalcEtf(i, field, val) {
+  if (!calcPortfolio[i]) return;
+  calcPortfolio[i][field] = parseInt(val) || 0;
+  renderCalcPortfolio();
 }
+function removeCalcEtf(i) {
+  calcPortfolio.splice(i, 1);
+  renderCalcPortfolio();
+}
+
+function formatNum(n) { return Math.round(n).toLocaleString('en-US'); }
 
 // ─── Yield Ranking ───────────────────────────────────────────
 let yieldFilter = 'all';
@@ -541,54 +546,57 @@ function renderWatchlist() {
 }
 
 // ─── Allocation by Age ───────────────────────────────────────
-const ALLOC_COLORS = { '市值型 ETF': '#10b981', '高股息 ETF': '#f59e0b', '美股 ETF': '#6366f1', '債券 ETF': '#ec4899' };
+const ALLOC_COLORS = { '市值型 ETF': '#10b981', '高股息 ETF': '#f59e0b', '主動式 ETF': '#8b5cf6', '美股 ETF': '#6366f1', '債券 ETF': '#ec4899' };
 
 const ALLOCATION_BY_AGE = {
   '20-30': {
     stage: '資產累積初期',
     description: '時間是最大資產 — 用 10-30 年的長期複利累積部位。風險承受度最高，重點抓成長。',
     allocation: [
-      { name: '市值型 ETF', pct: 70, suggested: ['0050', '006208', '00692'], note: '長期跟著大盤成長，分割後 0050 入手門檻低' },
-      { name: '高股息 ETF', pct: 20, suggested: ['00878', '0056'], note: '小比例培養領息習慣，享受配息再投入複利' },
+      { name: '市值型 ETF', pct: 60, suggested: ['0050', '006208', '00692'], note: '長期跟著大盤成長，分割後 0050 入手門檻低' },
+      { name: '高股息 ETF', pct: 15, suggested: ['00878', '0056'], note: '小比例培養領息習慣，享受配息再投入複利' },
+      { name: '主動式 ETF', pct: 15, suggested: ['00981A', '00991A', '00985A'], note: '年輕能承受波動，用「進化版台灣50」主動選股拚超額報酬' },
       { name: '美股 ETF', pct: 10, suggested: ['009815', '00646'], note: '降低台股單一市場集中' }
     ],
-    tip: '剛起步不要怕跌，跌的時候反而是累積張數的最佳時機。設定每月固定扣款，10 年不中斷，複利會驚艷你。新手不要碰主動式 ETF 或槓桿型，先把市值型存好。',
+    tip: '剛起步不要怕跌，跌的時候反而是累積張數的最佳時機。主動式 ETF 波動大、成立又短沒經歷過股災，比例控制在 15% 以內當衛星就好，核心還是市值型。',
     monthlyBudget: '建議每月 NT$ 5,000-10,000 起步'
   },
   '30-40': {
     stage: '家庭組成期',
     description: '可能買房、結婚、生子，現金流需求上升，但時間仍長，成長依然主軸。',
     allocation: [
-      { name: '市值型 ETF', pct: 50, suggested: ['0050', '006208'], note: '主力仍在成長端' },
-      { name: '高股息 ETF', pct: 30, suggested: ['00878', '00919', '0056'], note: '配息再投入或補家用' },
+      { name: '市值型 ETF', pct: 45, suggested: ['0050', '006208'], note: '主力仍在成長端' },
+      { name: '高股息 ETF', pct: 25, suggested: ['00878', '00919', '0056'], note: '配息再投入或補家用' },
+      { name: '主動式 ETF', pct: 15, suggested: ['00981A', '00982A', '00994A'], note: '挑配息穩的主動式（如 00982A 季季調升）兼顧成長與現金流' },
       { name: '美股 ETF', pct: 10, suggested: ['009815', '00646'], note: '全球分散' },
-      { name: '債券 ETF', pct: 10, suggested: ['00679B', '00937B'], note: '小比例降波動' }
+      { name: '債券 ETF', pct: 5, suggested: ['00679B', '00937B'], note: '小比例降波動' }
     ],
-    tip: '可以試月配 ETF（00929、00940、00946）培養領息感，但月配仍要看「填息率」+「殖利率」雙指標。00919、0056 這種季配老牌仍是核心。',
+    tip: '可以試月配 ETF（00929、00940、00946）培養領息感，但月配仍要看「填息率」+「殖利率」雙指標。主動式 ETF 選費用率合理、經理人有紀錄的。',
     monthlyBudget: '建議每月 NT$ 10,000-30,000'
   },
   '40-50': {
     stage: '中堅期',
     description: '事業高峰、收入較穩，要從「累積資產」逐漸轉向「打造被動現金流」。',
     allocation: [
-      { name: '市值型 ETF', pct: 35, suggested: ['0050', '006208'], note: '保留成長部位抗通膨' },
+      { name: '市值型 ETF', pct: 30, suggested: ['0050', '006208'], note: '保留成長部位抗通膨' },
       { name: '高股息 ETF', pct: 35, suggested: ['00878', '00919', '00918', '00713'], note: '主力轉為現金流' },
+      { name: '主動式 ETF', pct: 10, suggested: ['00982A', '00984A'], note: '小比例主動高息（如 00984A），用一點主動操作換取超額報酬' },
       { name: '美股 ETF', pct: 10, suggested: ['009815'], note: '分散' },
-      { name: '債券 ETF', pct: 20, suggested: ['00679B', '00937B'], note: '增加穩定度' }
+      { name: '債券 ETF', pct: 15, suggested: ['00679B', '00937B'], note: '增加穩定度' }
     ],
-    tip: '開始重視「填息率」而非「殖利率」— 配得高但填不回來等於沒賺。可用工具頁的試算機檢查持有張數是否觸發補充保費。',
+    tip: '開始重視「填息率」而非「殖利率」— 配得高但填不回來等於沒賺。主動式 ETF 比例要收斂，畢竟離退休越近越禁不起大波動。可用工具頁試算機檢查補充保費。',
     monthlyBudget: '建議每月 NT$ 20,000-50,000'
   },
   '50-60': {
     stage: '退休準備期',
-    description: '距離退休 5-10 年，要把資產「轉換」成穩定現金流，降低波動。',
+    description: '距離退休 5-10 年，要把資產「轉換」成穩定現金流，降低波動。主動式 ETF 成立太短沒過股災，這階段開始退出。',
     allocation: [
       { name: '市值型 ETF', pct: 20, suggested: ['0050'], note: '保留少量抗通膨' },
       { name: '高股息 ETF', pct: 45, suggested: ['00878', '00919', '00891', '00918'], note: '主力現金流' },
       { name: '美股 ETF', pct: 15, suggested: ['009815', '00646'], note: '匯率分散' },
       { name: '債券 ETF', pct: 20, suggested: ['00679B', '00937B'], note: '降低波動' }
     ],
-    tip: '組合月配 + 季配 + 半年配 ETF 做到「月月領息」現金流。可以開始試算退休後每月被動收入需求 vs 預期支出。',
+    tip: '組合月配 + 季配 + 半年配 ETF 做到「月月領息」現金流。可以開始試算退休後每月被動收入需求 vs 預期支出。這階段不建議再加主動式，波動風險不對稱。',
     monthlyBudget: '建議每月 NT$ 30,000-80,000'
   },
   '60+': {
@@ -678,6 +686,41 @@ function renderAllocation() {
       <div>${escapeHtml(data.monthlyBudget)}</div>
     </div>
   `;
+
+  renderActiveEtfList();
+}
+
+// 主動式 ETF 一覽（配置 tab 底部）
+let activeEtfFilter = 'all';
+const ACTIVE_TYPE_LABEL = { '主動式國內股票型': '台股', '主動式國外股票型': '海外股', '主動式債券型': '債券' };
+const ACTIVE_TYPE_COLOR = { '主動式國內股票型': '#10b981', '主動式國外股票型': '#6366f1', '主動式債券型': '#ec4899' };
+
+function renderActiveEtfList() {
+  const all = window.ACTIVE_ETFS || [];
+  document.querySelectorAll('#active-filters .chip').forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.atype === activeEtfFilter);
+    chip.onclick = () => { activeEtfFilter = chip.dataset.atype; renderActiveEtfList(); };
+  });
+  const list = activeEtfFilter === 'all' ? all : all.filter(e => e.type === activeEtfFilter);
+  const el = document.getElementById('active-etf-list');
+  if (!el) return;
+  el.innerHTML = `<div style="font-size:11px;color:#9ca3af;margin:0 4px 8px">共 ${all.length} 檔主動式 ETF · 顯示 ${list.length} 檔</div>` +
+    list.map(e => {
+      const tcolor = ACTIVE_TYPE_COLOR[e.type] || '#6b7280';
+      const tlabel = ACTIVE_TYPE_LABEL[e.type] || e.type;
+      const incept = e.inception && e.inception.length === 8 ? `${e.inception.slice(0,4)}/${e.inception.slice(4,6)}` : '';
+      return `
+        <div class="active-etf-row" onclick="showToast('${e.code} ${e.name} — 完整評等在評等分頁')">
+          <div class="ae-left">
+            <span class="ae-type" style="background:${tcolor}">${tlabel}</span>
+            <div>
+              <div class="ae-code">${e.code} <span class="ae-name">${escapeHtml(e.name)}</span></div>
+              <div class="ae-meta">${escapeHtml(e.manager.replace('證券投資信託股份有限公司','投信').replace('證券投資信託','投信'))}${incept ? ' · 成立 '+incept : ''}</div>
+            </div>
+          </div>
+          <div class="ae-fee">${e.mgmt_fee != null ? '費 '+e.mgmt_fee+'%' : ''}</div>
+        </div>`;
+    }).join('');
 }
 
 // ─── Rating (主動式 ETF 評等) ─────────────────────────────────

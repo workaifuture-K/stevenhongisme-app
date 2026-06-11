@@ -1040,3 +1040,64 @@ body {
   line-height: 1.6;
   margin-bottom: 12px;
 }
+
+/* ─── 主動式 ETF 一覽（配置 tab）─────────────────────────── */
+.active-etf-row {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+}
+.ae-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.ae-type {
+  color: white; font-size: 10px; font-weight: 700;
+  padding: 3px 7px; border-radius: 6px; flex-shrink: 0;
+}
+.ae-code { font-size: 13px; font-weight: 700; color: #111827; }
+.ae-name { font-weight: 600; color: #6b7280; font-size: 12px; }
+.ae-meta { font-size: 11px; color: #9ca3af; margin-top: 1px; }
+.ae-fee { font-size: 11px; color: #6b7280; flex-shrink: 0; }
+
+/* ─── 計算機多 ETF 組合 ─────────────────────────────────── */
+.calc-empty {
+  text-align: center; color: #9ca3af; font-size: 13px;
+  padding: 24px; background: white; border-radius: 12px;
+  border: 1px dashed #d1d5db;
+}
+.cp-card {
+  background: white; border: 1px solid #e5e7eb; border-radius: 12px;
+  padding: 14px; margin-bottom: 10px;
+}
+.cp-card.triggered { border-color: #fca5a5; background: #fef2f2; }
+.cp-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.cp-code { font-weight: 800; font-size: 15px; color: #111827; }
+.cp-name { font-weight: 600; font-size: 13px; color: #6b7280; }
+.cp-sub { font-size: 11px; color: #9ca3af; margin-top: 3px; }
+.cp-est {
+  background: #fef3c7; color: #92400e; font-size: 9px;
+  padding: 1px 5px; border-radius: 4px; margin-left: 4px;
+}
+.cp-del {
+  background: #f3f4f6; border: none; color: #9ca3af; font-size: 18px;
+  width: 28px; height: 28px; border-radius: 8px; cursor: pointer; flex-shrink: 0; line-height: 1;
+}
+.cp-del:active { background: #fee2e2; color: #dc2626; }
+.cp-inputs { display: flex; align-items: center; gap: 8px; margin: 12px 0 10px; }
+.cp-inp { flex: 1; display: flex; align-items: center; gap: 6px; }
+.cp-inp input {
+  flex: 1; padding: 8px 10px; border: 1px solid #d1d5db;
+  border-radius: 8px; font-size: 15px; width: 100%; text-align: right;
+}
+.cp-inp span { font-size: 13px; color: #6b7280; flex-shrink: 0; }
+.cp-plus { color: #9ca3af; }
+.cp-result {
+  font-size: 12px; padding: 8px 10px; border-radius: 8px; line-height: 1.5;
+}
+.cp-result.warn { background: #fee2e2; color: #b91c1c; }
+.cp-result.good { background: #f0fdf4; color: #15803d; }

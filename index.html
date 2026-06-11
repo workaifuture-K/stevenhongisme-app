@@ -26,7 +26,7 @@
     </div>
   </header>
 
-  <div class="mock-banner">📌 Prototype v1.5 — 補充保費試算機已接 CMoney 真實 ETF 配息資料（202 檔）</div>
+  <div class="mock-banner">📌 Prototype v1.6 — 多 ETF 組合試算 + 主動式 ETF 配置（CMoney 真實資料）</div>
 
   <main>
     <!-- ─────────── HOME ─────────── -->
@@ -99,55 +99,27 @@
       </div>
 
       <div class="calc-form">
-        <label for="calc-etf-search">選擇 ETF</label>
+        <label for="calc-etf-search">加入 ETF 到你的組合</label>
         <input type="text" id="calc-etf-search" placeholder="輸入代號或名稱搜尋，例如 0056 或 高股息" autocomplete="off">
         <div id="calc-etf-dropdown" class="etf-dropdown"></div>
-        <div id="calc-etf-selected" class="etf-selected">尚未選擇</div>
-
-        <label style="margin-top:14px">持有部位（含零股）</label>
-        <div style="display:flex;gap:8px;align-items:center">
-          <div style="flex:1">
-            <input type="number" id="calc-shares" min="0" max="99999" value="20" style="width:100%">
-            <div style="font-size:11px;color:#9ca3af;text-align:center;margin-top:2px">張</div>
-          </div>
-          <div style="font-size:18px;color:#9ca3af;padding-bottom:18px">＋</div>
-          <div style="flex:1">
-            <input type="number" id="calc-odd" min="0" max="999" value="0" style="width:100%">
-            <div style="font-size:11px;color:#9ca3af;text-align:center;margin-top:2px">股（零股，0-999）</div>
-          </div>
-        </div>
+        <div style="font-size:11px;color:#9ca3af;margin-top:6px">💡 補充保費是「<b>每一筆</b>股利單獨判斷是否達 2 萬」，不是全部加總，所以可以加多檔比較。</div>
       </div>
 
-      <div class="calc-result">
+      <div id="calc-portfolio"></div>
+
+      <div class="calc-result" id="calc-summary" style="display:none">
         <div class="calc-result-row">
-          <span class="calc-result-label">本期每股配發</span>
-          <span class="calc-result-val" id="calc-divval" style="font-size:15px">—</span>
-        </div>
-        <div class="calc-result-row">
-          <span class="calc-result-label">配息總額</span>
+          <span class="calc-result-label">組合配息總額</span>
           <span class="calc-result-val" id="calc-total">—</span>
         </div>
         <div class="calc-result-row">
-          <span class="calc-result-label">其中股利所得（課保費基礎）</span>
-          <span class="calc-result-val" id="calc-incomebase" style="font-size:15px">—</span>
+          <span class="calc-result-label">會被課補保費的檔數</span>
+          <span class="calc-result-val" id="calc-trigcount">—</span>
         </div>
         <div class="calc-result-row">
-          <span class="calc-result-label">是否觸發補充保費</span>
-          <span class="calc-result-val" id="calc-trigger">—</span>
-        </div>
-        <div class="calc-result-row">
-          <span class="calc-result-label">補充保費金額 (2.11%)</span>
+          <span class="calc-result-label">補充保費合計 (2.11%)</span>
           <span class="calc-result-val" id="calc-fee">—</span>
         </div>
-        <div class="calc-result-row">
-          <span class="calc-result-label">超過多少張股會觸發</span>
-          <span class="calc-result-val" id="calc-threshold">— 張</span>
-        </div>
-
-        <div class="threshold-bar">
-          <div class="threshold-bar-fill" id="calc-bar" style="width:0%"></div>
-        </div>
-        <div class="threshold-marker">股利所得 NT$ 20,000 門檻</div>
       </div>
 
       <div class="calc-note" id="calc-note"></div>
@@ -238,9 +210,18 @@
 
       <div id="alloc-content"></div>
 
+      <div class="section-title" style="margin-top:24px">📋 主動式 ETF 一覽（CMoney 真實資料）</div>
+      <div class="filter-chips" id="active-filters" style="padding:0 4px 10px">
+        <button class="chip active" data-atype="all">全部</button>
+        <button class="chip" data-atype="主動式國內股票型">台股</button>
+        <button class="chip" data-atype="主動式國外股票型">海外股</button>
+        <button class="chip" data-atype="主動式債券型">債券</button>
+      </div>
+      <div id="active-etf-list"></div>
+
       <div class="alloc-disclaimer">
         <b>⚠️ 免責聲明</b><br>
-        本配置建議基於稀飯公開內容傾向歸納，僅供示範參考。實際投資請依個人風險承受度、收入支出、家庭責任、退休規劃綜合評估，必要時諮詢專業理財顧問。
+        本配置建議基於稀飯公開內容傾向歸納，僅供示範參考。主動式 ETF 清單為 CMoney SQL 真實資料，但配置比例為示範。實際投資請依個人風險承受度、收入支出、家庭責任、退休規劃綜合評估，必要時諮詢專業理財顧問。
       </div>
     </section>
 
@@ -419,9 +400,9 @@
 
   <nav class="bottom-nav">
     <a href="#home" class="nav-link active" data-view="home"><span class="icon">🛠️</span>工具</a>
+    <a href="#allocation" class="nav-link" data-view="allocation"><span class="icon">🎯</span>配置</a>
     <a href="#rating" class="nav-link" data-view="rating"><span class="icon">🏆</span>評等</a>
     <a href="#library" class="nav-link" data-view="library"><span class="icon">📚</span>知識</a>
-    <a href="#allocation" class="nav-link" data-view="allocation"><span class="icon">🎯</span>配置</a>
     <a href="#community" class="nav-link" data-view="community"><span class="icon">👥</span>社團</a>
     <a href="#monetize" class="nav-link" data-view="monetize"><span class="icon">💰</span>變現</a>
     <a href="#roi" class="nav-link cmoney-only" data-view="roi"><span class="icon">📊</span>ROI</a>
@@ -429,9 +410,10 @@
 
 </div>
 
-<script src="data/data.js?v=15"></script>
-<script src="data/etfs_extended.js?v=15"></script>
-<script src="data/etf_dividends.js?v=15"></script>
-<script src="js/app.js?v=15"></script>
+<script src="data/data.js?v=16"></script>
+<script src="data/etfs_extended.js?v=16"></script>
+<script src="data/etf_dividends.js?v=16"></script>
+<script src="data/active_etfs.js?v=16"></script>
+<script src="js/app.js?v=16"></script>
 </body>
 </html>
