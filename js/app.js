@@ -318,11 +318,11 @@ function initCalc() {
     searchEl.dataset.bound = '1';
     searchEl.addEventListener('input', onCalcSearch);
   }
-  // 預設帶 0056 + 00878 兩檔當示範
+  // 預設帶 0056 + 00878 兩檔當示範（100 張 → 直接觸發補保費，讓使用者一看就知道工具會算）
   if (calcPortfolio.length === 0) {
     ['0056', '00878'].forEach(c => {
       const e = getEtfDividends().find(x => x.code === c);
-      if (e) calcPortfolio.push({ ...e, zhang: 50, odd: 0 });
+      if (e) calcPortfolio.push({ ...e, zhang: 100, odd: 0 });
     });
   }
   closeCalcAdd();
@@ -386,6 +386,37 @@ function calcOneEtf(p) {
   return { totalShares, totalDiv, incomePct, taxable, triggered, fee, perShareTaxable, sharesToTrigger };
 }
 
+// 單檔結果文字（render 與輸入即時刷新共用）
+function calcResultInner(r) {
+  const thZ = Math.floor(r.sharesToTrigger / 1000), thO = r.sharesToTrigger % 1000;
+  const thText = r.perShareTaxable <= 0 ? '本期免課' : (thO > 0 ? `${formatNum(thZ)}張${thO}股` : `${formatNum(thZ)}張`);
+  if (r.incomePct === 0) return `✓ 本期 0% 股利所得，免補保費（持有再多都免）`;
+  return r.triggered
+    ? `⚠️ 課稅基礎 NT$ ${formatNum(r.taxable)}（≥2萬）→ 補保費 NT$ ${formatNum(r.fee)}`
+    : `✓ 課稅基礎 NT$ ${formatNum(r.taxable)}（未達2萬）· 超過 ${thText} 才觸發`;
+}
+
+// 只更新各檔結果 + 總覽（不重建 input，保留焦點 → 可連續輸入多位數）
+function refreshCalcResults() {
+  let totalDiv = 0, totalFee = 0, trigCount = 0;
+  calcPortfolio.forEach((p, i) => {
+    const r = calcOneEtf(p);
+    totalDiv += r.totalDiv; totalFee += r.fee; if (r.triggered) trigCount++;
+    const card = document.querySelector(`.cp-card[data-i="${i}"]`);
+    if (card) {
+      card.classList.toggle('triggered', r.triggered);
+      const res = card.querySelector('.cp-result');
+      if (res) { res.className = 'cp-result ' + (r.triggered ? 'warn' : 'good'); res.innerHTML = calcResultInner(r); }
+    }
+  });
+  const total = document.getElementById('calc-total');
+  const tc = document.getElementById('calc-trigcount');
+  const fee = document.getElementById('calc-fee');
+  if (total) total.textContent = `NT$ ${formatNum(totalDiv)}`;
+  if (tc) { tc.textContent = `${trigCount} / ${calcPortfolio.length} 檔`; tc.className = 'calc-result-val ' + (trigCount > 0 ? 'warn' : 'good'); }
+  if (fee) { fee.textContent = `NT$ ${formatNum(totalFee)}`; fee.className = 'calc-result-val ' + (totalFee > 0 ? 'warn' : ''); }
+}
+
 function renderCalcPortfolio() {
   const wrap = document.getElementById('calc-portfolio');
   const step2 = document.getElementById('calc-step2');
@@ -400,11 +431,9 @@ function renderCalcPortfolio() {
 
   wrap.innerHTML = calcPortfolio.map((p, i) => {
     const r = calcOneEtf(p);
-    const thZ = Math.floor(r.sharesToTrigger / 1000), thO = r.sharesToTrigger % 1000;
-    let thText = r.perShareTaxable <= 0 ? '本期免課' : (thO > 0 ? `${formatNum(thZ)}張${thO}股` : `${formatNum(thZ)}張`);
     const estTag = p.ratio_estimated ? `<span class="cp-est" title="最新期占比未公告，沿用 ${p.ratio_period ? p.ratio_period.slice(0,6) : '上期'}">占比估</span>` : '';
     return `
-      <div class="cp-card ${r.triggered ? 'triggered' : ''}">
+      <div class="cp-card ${r.triggered ? 'triggered' : ''}" data-i="${i}">
         <div class="cp-head">
           <div>
             <span class="cp-code">${p.code}</span> <span class="cp-name">${escapeHtml(p.name)}</span>
@@ -417,13 +446,7 @@ function renderCalcPortfolio() {
           <div class="cp-plus">＋</div>
           <div class="cp-inp"><input type="number" min="0" max="999" value="${p.odd}" oninput="updateCalcEtf(${i},'odd',this.value)"><span>股</span></div>
         </div>
-        <div class="cp-result ${r.triggered ? 'warn' : 'good'}">
-          ${r.incomePct === 0
-            ? `✓ 本期 0% 股利所得，免補保費（持有再多都免）`
-            : r.triggered
-              ? `⚠️ 課稅基礎 NT$ ${formatNum(r.taxable)}（≥2萬）→ 補保費 NT$ ${formatNum(r.fee)}`
-              : `✓ 課稅基礎 NT$ ${formatNum(r.taxable)}（未達2萬）· 超過 ${thText} 才觸發`}
-        </div>
+        <div class="cp-result ${r.triggered ? 'warn' : 'good'}">${calcResultInner(r)}</div>
       </div>`;
   }).join('');
 
@@ -447,7 +470,7 @@ function renderCalcPortfolio() {
 function updateCalcEtf(i, field, val) {
   if (!calcPortfolio[i]) return;
   calcPortfolio[i][field] = parseInt(val) || 0;
-  renderCalcPortfolio();
+  refreshCalcResults(); // 只刷新結果，不重建 input → 焦點保留，可連續輸入
 }
 function removeCalcEtf(i) {
   calcPortfolio.splice(i, 1);
