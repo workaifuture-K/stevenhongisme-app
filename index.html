@@ -26,14 +26,25 @@
     </div>
   </header>
 
-  <div class="mock-banner">📌 Prototype v2.1 — 成分股雙向查（ETF↔個股，稀飯招牌套路自動化）</div>
+  <div class="mock-banner">📌 Prototype v2.2 — 成分股查詢升首頁第一位 hero</div>
 
   <main>
     <!-- ─────────── HOME ─────────── -->
     <section id="view-home" class="view active">
       <div class="section-title">⭐ 熱門工具</div>
 
-      <!-- Featured tool: 補充保費試算機 (large card, hero of Home) -->
+      <!-- Hero 1: 成分股查詢（第一位）-->
+      <a href="#holdings" class="featured-tool" data-view-link style="background:linear-gradient(135deg,#06b6d4 0%,#0891b2 100%);box-shadow:0 4px 12px rgba(6,182,212,0.25)">
+        <div class="ft-icon">🔍</div>
+        <div class="ft-meta">
+          <div class="ft-badge">招牌功能</div>
+          <div class="ft-title">成分股雙向查</div>
+          <div class="ft-desc">看好台積電/聯電但買不起？輸入個股 → 立刻列出含量最高的 ETF。或反過來看一檔 ETF 持有哪些股。CMoney 真實資料。</div>
+          <div class="ft-cta" style="color:#0891b2">立即查詢 →</div>
+        </div>
+      </a>
+
+      <!-- Hero 2: 補充保費試算機 -->
       <a href="#calc" class="featured-tool" data-view-link>
         <div class="ft-icon">🧮</div>
         <div class="ft-meta">
@@ -61,10 +72,10 @@
           <div class="ql-label">我的關注</div>
           <div class="ql-sub">5 檔追蹤中</div>
         </a>
-        <a href="#holdings" class="quick-link">
-          <span class="ql-icon">🔍</span>
-          <div class="ql-label">成分股查詢</div>
-          <div class="ql-sub">204 檔 ETF</div>
+        <a href="#rating" class="quick-link">
+          <span class="ql-icon">🏆</span>
+          <div class="ql-label">ETF 評等</div>
+          <div class="ql-sub">34 檔主動式</div>
         </a>
       </div>
 
@@ -435,12 +446,12 @@
 
 </div>
 
-<script src="data/data.js?v=21"></script>
-<script src="data/etfs_extended.js?v=21"></script>
-<script src="data/etf_dividends.js?v=21"></script>
-<script src="data/all_etfs.js?v=21"></script>
-<script src="data/rating.js?v=21"></script>
-<script src="data/holdings.js?v=21"></script>
-<script src="js/app.js?v=21"></script>
+<script src="data/data.js?v=22"></script>
+<script src="data/etfs_extended.js?v=22"></script>
+<script src="data/etf_dividends.js?v=22"></script>
+<script src="data/all_etfs.js?v=22"></script>
+<script src="data/rating.js?v=22"></script>
+<script src="data/holdings.js?v=22"></script>
+<script src="js/app.js?v=22"></script>
 </body>
 </html>
