@@ -88,6 +88,7 @@ function showView(viewName, param) {
     case 'allocation': renderAllocation(); break;
     case 'community': renderCommunity(); break;
     case 'rating': renderRating(); break;
+    case 'holdings': renderHoldings(param); break;
   }
 
   // Scroll to top
@@ -827,7 +828,7 @@ const GRADE_STYLE = {
 
 const DIM_LABELS = { perf: '績效', risk: '風險', div: '配息', fee: '費用', scale: '規模' };
 
-let currentGrade = 'S';
+let currentGrade = 'A';
 const GRADE_DESC = {
   S: '頂級（總分 ≥85）',
   A: '優等（75-84）',
@@ -836,12 +837,38 @@ const GRADE_DESC = {
   N: '觀察中（新檔未滿一季）',
 };
 
+// 真實評等資料來源：window.RATING（CMoney SQL 算分）；無則 fallback 到手編 RATING_DATA
+function getRatingData() {
+  const real = window.RATING;
+  if (!real || !real.length) return RATING_DATA;
+  // 補上短評（依分數特徵自動生成）
+  return real.map(r => ({ ...r, comment: r.comment || ratingComment(r) }));
+}
+
+function ratingComment(r) {
+  const s = r.scores;
+  const bits = [];
+  if (r.grade === 'N') return `新檔觀察中，淨值資料未滿一季，暫不評分。近期報酬 ${r.m3 != null ? '+' + r.m3.toFixed(1) + '%' : '—'}。`;
+  if (s.perf >= 85) bits.push('績效強');
+  else if (s.perf <= 45) bits.push('績效偏弱');
+  if (s.fee >= 80) bits.push('費用低');
+  else if (s.fee <= 35) bits.push('費用偏高');
+  if (s.div >= 75) bits.push('配息佳');
+  if (s.risk >= 78) bits.push('波動小');
+  else if (s.risk <= 55) bits.push('波動較大');
+  const perf3 = r.m3 != null ? `近三月 ${r.m3 >= 0 ? '+' : ''}${r.m3.toFixed(1)}%` : '';
+  const feeStr = r.fee != null ? `管理費 ${r.fee}%` : '';
+  return `${bits.join('、') || '各維度均衡'}。${perf3}${feeStr ? '、' + feeStr : ''}。${r.is_bond ? '（債券型，以債券標準評分）' : ''}`;
+}
+
 function renderRating() {
+  const data = getRatingData();
   const order = { S: 0, A: 1, B: 2, C: 3, N: 4 };
   // 各級別檔數
   const counts = {};
-  RATING_DATA.forEach(r => counts[r.grade] = (counts[r.grade] || 0) + 1);
+  data.forEach(r => counts[r.grade] = (counts[r.grade] || 0) + 1);
   const grades = ['S', 'A', 'B', 'C', 'N'].filter(g => counts[g]);
+  if (!grades.includes(currentGrade)) currentGrade = grades[0];
 
   // 切換按鈕
   const tabs = document.getElementById('grade-tabs');
@@ -858,7 +885,7 @@ function renderRating() {
     tabs.querySelectorAll('.grade-tab').forEach(t => t.onclick = () => { currentGrade = t.dataset.grade; renderRating(); });
   }
 
-  const list = RATING_DATA.filter(r => r.grade === currentGrade);
+  const list = data.filter(r => r.grade === currentGrade);
   const cardsHtml = list.map(r => {
     const g = GRADE_STYLE[r.grade];
     const bars = Object.keys(DIM_LABELS).map(k => {
@@ -870,17 +897,20 @@ function renderRating() {
           <div class="rate-dim-val">${v > 0 ? v : '—'}</div>
         </div>`;
     }).join('');
+    const hasHoldings = (window.ETF_HOLDINGS || {})[r.code];
+    const totalStr = r.total != null ? `總分 ${r.total}` : '未評分';
     return `
-      <div class="rate-card" onclick="showToast('${r.code} 完整評等理由 — 付費社團解鎖（mock）')">
+      <div class="rate-card">
         <div class="rate-head">
           <div class="grade-badge" style="background:${g.bg}">${r.grade}</div>
           <div class="rate-meta">
             <div class="rate-code">${r.code} <span class="rate-name">${escapeHtml(r.name)}</span></div>
-            <div class="rate-ytd">今年以來 <b>${r.ytd}</b></div>
+            <div class="rate-ytd">${totalStr} · 報酬 <b>${r.ytd}</b></div>
           </div>
         </div>
         <div class="rate-dims">${bars}</div>
         <div class="rate-comment">🍚 ${escapeHtml(r.comment)}</div>
+        ${hasHoldings ? `<a href="#holdings/${r.code}" class="rate-holdings-link" onclick="event.stopPropagation()">查看成分股 →</a>` : ''}
       </div>`;
   }).join('');
 
@@ -892,6 +922,84 @@ function renderRating() {
       <span style="font-size:12px">加入稀飯付費社團（APP 內），評級異動第一時間推播給你。</span><br>
       <a href="#monetize" class="upsell-cta" data-view-link>查看訂閱方案 →</a>
     </div>`;
+}
+
+// ─── Holdings (成分股) ───────────────────────────────────────
+let holdingsSelected = null;
+
+function renderHoldings(code) {
+  const H = window.ETF_HOLDINGS || {};
+  // 名稱對照（從 all_etfs / etf_dividends / active_etfs 找）
+  const nameOf = c => {
+    const a = (window.ALL_ETFS || []).find(x => x.code === c);
+    if (a) return a.name;
+    const d = (window.ETF_DIVIDENDS || []).find(x => x.code === c);
+    return d ? d.name : '';
+  };
+
+  if (code && H[code]) holdingsSelected = code;
+  if (!holdingsSelected) holdingsSelected = '0050';
+
+  // 搜尋框 + 結果
+  const searchEl = document.getElementById('holdings-search');
+  if (searchEl && !searchEl.dataset.bound) {
+    searchEl.dataset.bound = '1';
+    searchEl.addEventListener('input', () => renderHoldingsSearch());
+    searchEl.addEventListener('focus', () => renderHoldingsSearch());
+  }
+  renderHoldingsSearch();
+  renderHoldingsDetail(nameOf);
+}
+
+function renderHoldingsSearch() {
+  const H = window.ETF_HOLDINGS || {};
+  const q = (document.getElementById('holdings-search')?.value || '').trim().toLowerCase();
+  const dd = document.getElementById('holdings-dropdown');
+  if (!dd) return;
+  if (!q) { dd.style.display = 'none'; return; }
+  const names = window.ALL_ETFS || [];
+  let list = Object.keys(H).map(c => {
+    const a = names.find(x => x.code === c);
+    return { code: c, name: a ? a.name : '' };
+  }).filter(e => e.code.toLowerCase().includes(q) || e.name.toLowerCase().includes(q)).slice(0, 30);
+  dd.innerHTML = list.length ? list.map(e =>
+    `<div class="etf-opt" data-code="${e.code}"><b>${e.code}</b> ${escapeHtml(e.name)}</div>`).join('')
+    : '<div class="etf-opt" style="color:#9ca3af">查無成分股資料</div>';
+  dd.querySelectorAll('.etf-opt[data-code]').forEach(el => el.onclick = () => {
+    holdingsSelected = el.dataset.code;
+    document.getElementById('holdings-search').value = '';
+    dd.style.display = 'none';
+    renderHoldings();
+  });
+  dd.style.display = 'block';
+}
+
+function renderHoldingsDetail(nameOf) {
+  const H = window.ETF_HOLDINGS || {};
+  const code = holdingsSelected;
+  const holdings = H[code] || [];
+  const name = nameOf(code);
+  const top10sum = holdings.reduce((s, h) => s + h.w, 0);
+
+  const rows = holdings.map((h, i) => `
+    <div class="hold-row">
+      <span class="hold-rank">${i + 1}</span>
+      <div class="hold-bar-wrap">
+        <div class="hold-name"><b>${h.sym}</b> ${escapeHtml(h.name)}</div>
+        <div class="hold-bar"><div class="hold-bar-fill" style="width:${Math.min(100, h.w / holdings[0].w * 100)}%"></div></div>
+      </div>
+      <span class="hold-w">${h.w}%</span>
+    </div>`).join('');
+
+  document.getElementById('holdings-detail').innerHTML = `
+    <div class="hold-card-head">
+      <div>
+        <div class="hold-code">${code} <span class="hold-cname">${escapeHtml(name)}</span></div>
+        <div class="hold-sub">前 ${holdings.length} 大成分股 · 合計 ${top10sum.toFixed(1)}%</div>
+      </div>
+    </div>
+    ${rows || '<div class="calc-empty">查無成分股資料</div>'}
+    <div class="hold-note">📊 成分股資料來自 CMoney SQL（sysETFSHD），顯示權重前 10 大持股。共 ${Object.keys(H).length} 檔 ETF 可查。</div>`;
 }
 
 // ─── Community (社團) — 3 sub-sections ──────────────────────

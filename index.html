@@ -26,7 +26,7 @@
     </div>
   </header>
 
-  <div class="mock-banner">📌 Prototype v1.9 — ETF 評等改 S/A/B/C/N 級別切換</div>
+  <div class="mock-banner">📌 Prototype v2.0 — ETF 評等改真實算分（含C級）+ 成分股查詢</div>
 
   <main>
     <!-- ─────────── HOME ─────────── -->
@@ -61,10 +61,10 @@
           <div class="ql-label">我的關注</div>
           <div class="ql-sub">5 檔追蹤中</div>
         </a>
-        <a href="#library" class="quick-link">
-          <span class="ql-icon">📚</span>
-          <div class="ql-label">主題知識庫</div>
-          <div class="ql-sub">12 個主題</div>
+        <a href="#holdings" class="quick-link">
+          <span class="ql-icon">🔍</span>
+          <div class="ql-label">成分股查詢</div>
+          <div class="ql-sub">204 檔 ETF</div>
         </a>
       </div>
 
@@ -236,13 +236,13 @@
     <section id="view-rating" class="view">
       <div class="rating-hero">
         <h2>🏆 稀飯 ETF 評等</h2>
-        <p>台股主動式 ETF · 公式公開 · 資料可稽核</p>
+        <p>34 檔主動式 ETF · 公式公開 · 用 CMoney 真實報酬算分</p>
       </div>
 
       <div class="card" style="font-size:12px;color:#4b5563;line-height:1.7">
         <b style="color:#111827">評等方法（權重公開，付費不能改分數）</b><br>
-        績效 30%（含息報酬）· 風險 20%（波動/回撤）· 配息品質 20%（填息率/來源）· 費用 15% · 規模流動性 15%<br>
-        <span style="color:#9ca3af">等級：S（≥85）/ A（75-84）/ B（65-74）/ C（&lt;65）/ N（新檔觀察中，資料未滿一季不評）</span>
+        績效 30%（近三月含息報酬）· 風險 20%（近期波動）· 配息 20%（殖利率）· 費用 15%（管理費）· 規模 15%（成立時間）<br>
+        <span style="color:#9ca3af">等級：S（≥85）/ A（75-84）/ B（65-74）/ C（&lt;65）/ N（新檔資料未滿一季不評）。債券型以債券標準評績效。</span>
       </div>
 
       <div class="grade-tabs" id="grade-tabs"></div>
@@ -252,6 +252,19 @@
         <b>⚠️ 免責聲明</b><br>
         評等為資訊整理（基於公開資料 + 稀飯文章觀點之 prototype 示範），非投資建議或推介。分數與等級不代表未來績效，投資前請詳閱公開說明書。
       </div>
+    </section>
+
+    <!-- ─────────── HOLDINGS (成分股) ─────────── -->
+    <section id="view-holdings" class="view">
+      <div class="rating-hero" style="background:linear-gradient(135deg,#06b6d4,#0891b2)">
+        <h2>🔍 ETF 成分股查詢</h2>
+        <p>看一檔 ETF 實際持有哪些股票 · CMoney 真實資料</p>
+      </div>
+      <div style="position:relative">
+        <input type="text" id="holdings-search" placeholder="搜尋 ETF 代號或名稱，例如 0050 / 高股息" autocomplete="off" style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px;font-size:15px">
+        <div id="holdings-dropdown" class="etf-dropdown"></div>
+      </div>
+      <div id="holdings-detail" style="margin-top:14px"></div>
     </section>
 
     <!-- ─────────── MONETIZE ─────────── -->
@@ -418,10 +431,12 @@
 
 </div>
 
-<script src="data/data.js?v=19"></script>
-<script src="data/etfs_extended.js?v=19"></script>
-<script src="data/etf_dividends.js?v=19"></script>
-<script src="data/all_etfs.js?v=19"></script>
-<script src="js/app.js?v=19"></script>
+<script src="data/data.js?v=20"></script>
+<script src="data/etfs_extended.js?v=20"></script>
+<script src="data/etf_dividends.js?v=20"></script>
+<script src="data/all_etfs.js?v=20"></script>
+<script src="data/rating.js?v=20"></script>
+<script src="data/holdings.js?v=20"></script>
+<script src="js/app.js?v=20"></script>
 </body>
 </html>
