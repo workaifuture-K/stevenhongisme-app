@@ -64,8 +64,8 @@ function showView(viewName, param) {
   }
   view.classList.add('active');
 
-  // Update bottom nav（知識內容已併入社團，theme/post/library 都高亮「社團」）
-  const navActiveView = ({ theme: 'community', post: 'community', library: 'community' })[viewName] || viewName;
+  // Update bottom nav（知識/變現入口都在社團，theme/post/library/monetize 都高亮「社團」）
+  const navActiveView = ({ theme: 'community', post: 'community', library: 'community', monetize: 'community' })[viewName] || viewName;
   document.querySelectorAll('.nav-link').forEach(a => {
     a.classList.toggle('active', a.dataset.view === navActiveView);
   });
