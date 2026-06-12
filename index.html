@@ -26,7 +26,7 @@
     </div>
   </header>
 
-  <div class="mock-banner">📌 Prototype v1.6 — 多 ETF 組合試算 + 主動式 ETF 配置（CMoney 真實資料）</div>
+  <div class="mock-banner">📌 Prototype v1.7 — 全 ETF 分類瀏覽（CMoney 343 檔真實資料）</div>
 
   <main>
     <!-- ─────────── HOME ─────────── -->
@@ -99,10 +99,10 @@
       </div>
 
       <div class="calc-form">
-        <label for="calc-etf-search">加入 ETF 到你的組合</label>
-        <input type="text" id="calc-etf-search" placeholder="輸入代號或名稱搜尋，例如 0056 或 高股息" autocomplete="off">
+        <label for="calc-etf-search">➕ 加入 ETF 到你的組合（可加任意多檔）</label>
+        <input type="text" id="calc-etf-search" placeholder="點這裡搜尋代號或名稱，例如 0056 或 高股息 → 點結果加入" autocomplete="off">
         <div id="calc-etf-dropdown" class="etf-dropdown"></div>
-        <div style="font-size:11px;color:#9ca3af;margin-top:6px">💡 補充保費是「<b>每一筆</b>股利單獨判斷是否達 2 萬」，不是全部加總，所以可以加多檔比較。</div>
+        <div style="font-size:11px;color:#9ca3af;margin-top:6px">💡 補充保費是「<b>每一筆</b>股利單獨判斷是否達 2 萬」，不是全部加總，所以可以加多檔比較。下方每張卡片右上 × 可刪除。</div>
       </div>
 
       <div id="calc-portfolio"></div>
@@ -210,14 +210,10 @@
 
       <div id="alloc-content"></div>
 
-      <div class="section-title" style="margin-top:24px">📋 主動式 ETF 一覽（CMoney 真實資料）</div>
-      <div class="filter-chips" id="active-filters" style="padding:0 4px 10px">
-        <button class="chip active" data-atype="all">全部</button>
-        <button class="chip" data-atype="主動式國內股票型">台股</button>
-        <button class="chip" data-atype="主動式國外股票型">海外股</button>
-        <button class="chip" data-atype="主動式債券型">債券</button>
-      </div>
-      <div id="active-etf-list"></div>
+      <div class="section-title" style="margin-top:24px">📋 全 ETF 分類瀏覽（CMoney 真實資料）</div>
+      <input type="text" id="alletf-search" placeholder="搜尋代號或名稱..." autocomplete="off" style="width:100%;margin-bottom:10px">
+      <div class="filter-chips" id="alletf-filters" style="padding:0 4px 10px;flex-wrap:wrap"></div>
+      <div id="alletf-list"></div>
 
       <div class="alloc-disclaimer">
         <b>⚠️ 免責聲明</b><br>
@@ -410,10 +406,10 @@
 
 </div>
 
-<script src="data/data.js?v=16"></script>
-<script src="data/etfs_extended.js?v=16"></script>
-<script src="data/etf_dividends.js?v=16"></script>
-<script src="data/active_etfs.js?v=16"></script>
-<script src="js/app.js?v=16"></script>
+<script src="data/data.js?v=17"></script>
+<script src="data/etfs_extended.js?v=17"></script>
+<script src="data/etf_dividends.js?v=17"></script>
+<script src="data/all_etfs.js?v=17"></script>
+<script src="js/app.js?v=17"></script>
 </body>
 </html>

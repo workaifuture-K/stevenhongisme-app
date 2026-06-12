@@ -1101,3 +1101,14 @@ body {
 }
 .cp-result.warn { background: #fee2e2; color: #b91c1c; }
 .cp-result.good { background: #f0fdf4; color: #15803d; }
+
+/* ─── 全 ETF 分類組標頭 ─────────────────────────────────── */
+.cat-group-head {
+  font-size: 13px; font-weight: 700; color: #111827;
+  padding: 8px 12px; margin: 14px 0 8px;
+  background: #f9fafb; border-left: 4px solid #10b981; border-radius: 0 8px 8px 0;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.cat-group-head span { font-size: 11px; color: #9ca3af; font-weight: 500; }
+#alletf-filters .chip { font-size: 11px; padding: 4px 10px; }
+#alletf-search { padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 10px; font-size: 14px; }

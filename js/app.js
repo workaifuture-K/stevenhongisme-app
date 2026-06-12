@@ -687,40 +687,78 @@ function renderAllocation() {
     </div>
   `;
 
-  renderActiveEtfList();
+  renderAllEtfList();
 }
 
-// 主動式 ETF 一覽（配置 tab 底部）
-let activeEtfFilter = 'all';
-const ACTIVE_TYPE_LABEL = { '主動式國內股票型': '台股', '主動式國外股票型': '海外股', '主動式債券型': '債券' };
-const ACTIVE_TYPE_COLOR = { '主動式國內股票型': '#10b981', '主動式國外股票型': '#6366f1', '主動式債券型': '#ec4899' };
+// 全 ETF 分類瀏覽（配置 tab 底部）
+let allEtfFilter = 'all';
+let allEtfSearch = '';
+// 分類顯示順序 + 色票（依稀飯讀者最常看的排）
+const CAT_ORDER = ['高股息 ETF','市值型 ETF','主動式台股 ETF','產業主題 ETF','ESG ETF','其他台股 ETF','美股 ETF','海外股 ETF','日股 ETF','主動式海外 ETF','債券 ETF','主動式債券 ETF','槓桿/反向 ETF'];
+const CAT_COLOR = {
+  '高股息 ETF':'#f59e0b','市值型 ETF':'#10b981','主動式台股 ETF':'#8b5cf6','產業主題 ETF':'#06b6d4',
+  'ESG ETF':'#22c55e','其他台股 ETF':'#94a3b8','美股 ETF':'#6366f1','海外股 ETF':'#3b82f6',
+  '日股 ETF':'#ef4444','主動式海外 ETF':'#a855f7','債券 ETF':'#ec4899','主動式債券 ETF':'#db2777','槓桿/反向 ETF':'#78716c'
+};
 
-function renderActiveEtfList() {
-  const all = window.ACTIVE_ETFS || [];
-  document.querySelectorAll('#active-filters .chip').forEach(chip => {
-    chip.classList.toggle('active', chip.dataset.atype === activeEtfFilter);
-    chip.onclick = () => { activeEtfFilter = chip.dataset.atype; renderActiveEtfList(); };
-  });
-  const list = activeEtfFilter === 'all' ? all : all.filter(e => e.type === activeEtfFilter);
-  const el = document.getElementById('active-etf-list');
+function renderAllEtfList() {
+  const all = window.ALL_ETFS || [];
+  // 計算各分類檔數
+  const counts = {};
+  all.forEach(e => counts[e.cat] = (counts[e.cat]||0)+1);
+  const cats = CAT_ORDER.filter(c => counts[c]);
+
+  // chips（動態生成）
+  const chipBox = document.getElementById('alletf-filters');
+  if (chipBox) {
+    chipBox.innerHTML = `<button class="chip ${allEtfFilter==='all'?'active':''}" data-cat="all">全部 ${all.length}</button>` +
+      cats.map(c => `<button class="chip ${allEtfFilter===c?'active':''}" data-cat="${c}">${c.replace(' ETF','')} ${counts[c]}</button>`).join('');
+    chipBox.querySelectorAll('.chip').forEach(ch => ch.onclick = () => { allEtfFilter = ch.dataset.cat; renderAllEtfList(); });
+  }
+  // search
+  const searchEl = document.getElementById('alletf-search');
+  if (searchEl && !searchEl.dataset.bound) {
+    searchEl.dataset.bound = '1';
+    searchEl.addEventListener('input', () => { allEtfSearch = searchEl.value.trim().toLowerCase(); renderAllEtfList(); });
+  }
+
+  let list = all;
+  if (allEtfFilter !== 'all') list = list.filter(e => e.cat === allEtfFilter);
+  if (allEtfSearch) list = list.filter(e => e.code.toLowerCase().includes(allEtfSearch) || e.name.toLowerCase().includes(allEtfSearch));
+
+  const el = document.getElementById('alletf-list');
   if (!el) return;
-  el.innerHTML = `<div style="font-size:11px;color:#9ca3af;margin:0 4px 8px">共 ${all.length} 檔主動式 ETF · 顯示 ${list.length} 檔</div>` +
-    list.map(e => {
-      const tcolor = ACTIVE_TYPE_COLOR[e.type] || '#6b7280';
-      const tlabel = ACTIVE_TYPE_LABEL[e.type] || e.type;
-      const incept = e.inception && e.inception.length === 8 ? `${e.inception.slice(0,4)}/${e.inception.slice(4,6)}` : '';
-      return `
-        <div class="active-etf-row" onclick="showToast('${e.code} ${e.name} — 完整評等在評等分頁')">
-          <div class="ae-left">
-            <span class="ae-type" style="background:${tcolor}">${tlabel}</span>
-            <div>
-              <div class="ae-code">${e.code} <span class="ae-name">${escapeHtml(e.name)}</span></div>
-              <div class="ae-meta">${escapeHtml(e.manager.replace('證券投資信託股份有限公司','投信').replace('證券投資信託','投信'))}${incept ? ' · 成立 '+incept : ''}</div>
-            </div>
-          </div>
-          <div class="ae-fee">${e.mgmt_fee != null ? '費 '+e.mgmt_fee+'%' : ''}</div>
-        </div>`;
-    }).join('');
+
+  // 全部模式：按分類分組顯示；篩選模式：平鋪
+  let html = '';
+  if (allEtfFilter === 'all' && !allEtfSearch) {
+    cats.forEach(c => {
+      const items = all.filter(e => e.cat === c);
+      html += `<div class="cat-group-head" style="border-left-color:${CAT_COLOR[c]}">${c}<span>${items.length} 檔</span></div>`;
+      html += items.map(e => etfRowHtml(e)).join('');
+    });
+  } else {
+    html = `<div style="font-size:11px;color:#9ca3af;margin:0 4px 8px">顯示 ${list.length} / ${all.length} 檔</div>`;
+    html += list.map(e => etfRowHtml(e)).join('') || '<div class="calc-empty">查無符合的 ETF</div>';
+  }
+  el.innerHTML = html;
+}
+
+function etfRowHtml(e) {
+  const c = CAT_COLOR[e.cat] || '#6b7280';
+  const tag = e.cat.replace(' ETF','');
+  const fee = e.mgmt_fee != null ? '費 '+e.mgmt_fee+'%' : '';
+  return `
+    <div class="active-etf-row" onclick="showToast('${e.code} ${e.name}')">
+      <div class="ae-left">
+        <span class="ae-type" style="background:${c}">${tag}</span>
+        <div>
+          <div class="ae-code">${e.code} <span class="ae-name">${escapeHtml(e.name)}</span></div>
+          <div class="ae-meta">${escapeHtml(e.manager)}${e.index ? ' · '+escapeHtml(e.index.length>16?e.index.slice(0,16)+'…':e.index) : ''}</div>
+        </div>
+      </div>
+      <div class="ae-fee">${fee}</div>
+    </div>`;
 }
 
 // ─── Rating (主動式 ETF 評等) ─────────────────────────────────
