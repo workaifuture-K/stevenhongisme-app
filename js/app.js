@@ -711,6 +711,7 @@ function renderAllocation() {
 // 全 ETF 分類瀏覽（配置 tab 底部）
 let allEtfFilter = 'all';
 let allEtfSearch = '';
+let expandedCats = {};  // 哪些分類展開了（預設全摺疊）
 // 分類顯示順序 + 色票（依稀飯讀者最常看的排）
 const CAT_ORDER = ['高股息 ETF','市值型 ETF','主動式台股 ETF','產業主題 ETF','ESG ETF','其他台股 ETF','美股 ETF','海外股 ETF','日股 ETF','主動式海外 ETF','債券 ETF','主動式債券 ETF','槓桿/反向 ETF'];
 const CAT_COLOR = {
@@ -747,13 +748,18 @@ function renderAllEtfList() {
   const el = document.getElementById('alletf-list');
   if (!el) return;
 
-  // 全部模式：按分類分組顯示；篩選模式：平鋪
+  // 全部模式：按分類分組（可折疊，預設收合）；篩選模式：平鋪
   let html = '';
   if (allEtfFilter === 'all' && !allEtfSearch) {
     cats.forEach(c => {
       const items = all.filter(e => e.cat === c);
-      html += `<div class="cat-group-head" style="border-left-color:${CAT_COLOR[c]}">${c}<span>${items.length} 檔</span></div>`;
-      html += items.map(e => etfRowHtml(e)).join('');
+      const open = !!expandedCats[c];
+      html += `<div class="cat-group-head clickable ${open ? 'open' : ''}" style="border-left-color:${CAT_COLOR[c]}" onclick="toggleCat('${c}')">
+        <span class="cat-arrow">${open ? '▾' : '▸'}</span>
+        <span style="flex:1">${c}</span>
+        <span>${items.length} 檔</span>
+      </div>`;
+      if (open) html += `<div class="cat-group-body">${items.map(e => etfRowHtml(e)).join('')}</div>`;
     });
   } else {
     html = `<div style="font-size:11px;color:#9ca3af;margin:0 4px 8px">顯示 ${list.length} / ${all.length} 檔</div>`;
@@ -762,12 +768,18 @@ function renderAllEtfList() {
   el.innerHTML = html;
 }
 
+function toggleCat(c) {
+  expandedCats[c] = !expandedCats[c];
+  renderAllEtfList();
+}
+
 function etfRowHtml(e) {
   const c = CAT_COLOR[e.cat] || '#6b7280';
   const tag = e.cat.replace(' ETF','');
   const fee = e.mgmt_fee != null ? '費 '+e.mgmt_fee+'%' : '';
+  const hasHold = (window.ETF_HOLDINGS_DATA && window.ETF_HOLDINGS_DATA.holdings[e.code]);
   return `
-    <div class="active-etf-row" onclick="showToast('${e.code} ${e.name}')">
+    <div class="active-etf-row" ${hasHold ? `onclick="location.hash='#holdings/${e.code}'"` : `onclick="showToast('${e.code} ${e.name}')"`}>
       <div class="ae-left">
         <span class="ae-type" style="background:${c}">${tag}</span>
         <div>
@@ -775,7 +787,7 @@ function etfRowHtml(e) {
           <div class="ae-meta">${escapeHtml(e.manager)}${e.index ? ' · '+escapeHtml(e.index.length>16?e.index.slice(0,16)+'…':e.index) : ''}</div>
         </div>
       </div>
-      <div class="ae-fee">${fee}</div>
+      <div class="ae-fee">${fee}${hasHold ? ' 🔍' : ''}</div>
     </div>`;
 }
 
