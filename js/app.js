@@ -827,11 +827,39 @@ const GRADE_STYLE = {
 
 const DIM_LABELS = { perf: '績效', risk: '風險', div: '配息', fee: '費用', scale: '規模' };
 
+let currentGrade = 'S';
+const GRADE_DESC = {
+  S: '頂級（總分 ≥85）',
+  A: '優等（75-84）',
+  B: '中段（65-74）',
+  C: '後段（<65）',
+  N: '觀察中（新檔未滿一季）',
+};
+
 function renderRating() {
   const order = { S: 0, A: 1, B: 2, C: 3, N: 4 };
-  const sorted = [...RATING_DATA].sort((a, b) => order[a.grade] - order[b.grade]);
+  // 各級別檔數
+  const counts = {};
+  RATING_DATA.forEach(r => counts[r.grade] = (counts[r.grade] || 0) + 1);
+  const grades = ['S', 'A', 'B', 'C', 'N'].filter(g => counts[g]);
 
-  const html = sorted.map(r => {
+  // 切換按鈕
+  const tabs = document.getElementById('grade-tabs');
+  if (tabs) {
+    tabs.innerHTML = grades.map(g => {
+      const st = GRADE_STYLE[g];
+      const active = g === currentGrade;
+      return `<button class="grade-tab ${active ? 'active' : ''}" data-grade="${g}"
+                style="${active ? 'background:' + st.bg.match(/#[0-9a-f]+/i)[0] : ''}">
+                <span class="gt-letter">${g}</span>
+                <span class="gt-count">${counts[g]}</span>
+              </button>`;
+    }).join('');
+    tabs.querySelectorAll('.grade-tab').forEach(t => t.onclick = () => { currentGrade = t.dataset.grade; renderRating(); });
+  }
+
+  const list = RATING_DATA.filter(r => r.grade === currentGrade);
+  const cardsHtml = list.map(r => {
     const g = GRADE_STYLE[r.grade];
     const bars = Object.keys(DIM_LABELS).map(k => {
       const v = r.scores[k];
@@ -856,7 +884,9 @@ function renderRating() {
       </div>`;
   }).join('');
 
-  document.getElementById('rating-list').innerHTML = html + `
+  document.getElementById('rating-list').innerHTML =
+    `<div class="grade-header"><span class="grade-header-letter" style="background:${GRADE_STYLE[currentGrade].bg}">${currentGrade}</span>${GRADE_DESC[currentGrade]} · ${list.length} 檔</div>` +
+    cardsHtml + `
     <div class="upsell" style="margin-top:16px">
       <b>🔓 想看完整評等理由 + 調級即時通知？</b><br>
       <span style="font-size:12px">加入稀飯付費社團（APP 內），評級異動第一時間推播給你。</span><br>
