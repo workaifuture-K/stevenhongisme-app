@@ -26,7 +26,7 @@
     </div>
   </header>
 
-  <div class="mock-banner">📌 Prototype v1.7 — 全 ETF 分類瀏覽（CMoney 343 檔真實資料）</div>
+  <div class="mock-banner">📌 Prototype v1.8 — 試算機改「＋新增 ETF」直覺流程</div>
 
   <main>
     <!-- ─────────── HOME ─────────── -->
@@ -95,18 +95,29 @@
     <section id="view-calc" class="view">
       <div class="calc-hero">
         <h2>🧮 補充保費試算機</h2>
-        <p>選一檔 ETF + 持有部位 → 立刻算出是否被課補充保費。配息資料來自最新一期實際配發。</p>
+        <p>把你持有的 ETF 一檔一檔加進來，立刻算出每檔會不會被課 2.11% 補充保費。</p>
       </div>
 
-      <div class="calc-form">
-        <label for="calc-etf-search">➕ 加入 ETF 到你的組合（可加任意多檔）</label>
-        <input type="text" id="calc-etf-search" placeholder="點這裡搜尋代號或名稱，例如 0056 或 高股息 → 點結果加入" autocomplete="off">
-        <div id="calc-etf-dropdown" class="etf-dropdown"></div>
-        <div style="font-size:11px;color:#9ca3af;margin-top:6px">💡 補充保費是「<b>每一筆</b>股利單獨判斷是否達 2 萬」，不是全部加總，所以可以加多檔比較。下方每張卡片右上 × 可刪除。</div>
-      </div>
+      <!-- 步驟標題 -->
+      <div class="calc-step-label"><span class="calc-step-num">1</span>加入你持有的 ETF</div>
 
+      <!-- 已加入的 ETF 組合卡片 -->
       <div id="calc-portfolio"></div>
 
+      <!-- 大按鈕：新增 ETF（最明顯的入口）-->
+      <button id="calc-add-btn" class="calc-add-btn" onclick="openCalcAdd()">＋ 新增 ETF</button>
+
+      <!-- 搜尋面板（點上方按鈕才展開）-->
+      <div id="calc-add-panel" class="calc-add-panel" style="display:none">
+        <div class="calc-add-panel-head">
+          <input type="text" id="calc-etf-search" placeholder="輸入代號或名稱，例如 0056 / 高股息" autocomplete="off">
+          <button class="calc-add-close" onclick="closeCalcAdd()">取消</button>
+        </div>
+        <div id="calc-etf-dropdown" class="etf-dropdown" style="display:block;position:static;box-shadow:none;border:none;margin-top:8px"></div>
+      </div>
+
+      <!-- 步驟 2：組合總覽 -->
+      <div class="calc-step-label" id="calc-step2" style="display:none"><span class="calc-step-num">2</span>組合總覽</div>
       <div class="calc-result" id="calc-summary" style="display:none">
         <div class="calc-result-row">
           <span class="calc-result-label">組合配息總額</span>
@@ -406,10 +417,10 @@
 
 </div>
 
-<script src="data/data.js?v=17"></script>
-<script src="data/etfs_extended.js?v=17"></script>
-<script src="data/etf_dividends.js?v=17"></script>
-<script src="data/all_etfs.js?v=17"></script>
-<script src="js/app.js?v=17"></script>
+<script src="data/data.js?v=18"></script>
+<script src="data/etfs_extended.js?v=18"></script>
+<script src="data/etf_dividends.js?v=18"></script>
+<script src="data/all_etfs.js?v=18"></script>
+<script src="js/app.js?v=18"></script>
 </body>
 </html>

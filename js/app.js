@@ -286,12 +286,6 @@ function initCalc() {
   if (!searchEl.dataset.bound) {
     searchEl.dataset.bound = '1';
     searchEl.addEventListener('input', onCalcSearch);
-    searchEl.addEventListener('focus', onCalcSearch);
-    document.addEventListener('click', (e) => {
-      if (!e.target.closest('#calc-etf-search') && !e.target.closest('#calc-etf-dropdown')) {
-        document.getElementById('calc-etf-dropdown').style.display = 'none';
-      }
-    });
   }
   // 預設帶 0056 + 00878 兩檔當示範
   if (calcPortfolio.length === 0) {
@@ -300,7 +294,25 @@ function initCalc() {
       if (e) calcPortfolio.push({ ...e, zhang: 50, odd: 0 });
     });
   }
+  closeCalcAdd();
   renderCalcPortfolio();
+}
+
+// 展開新增面板
+function openCalcAdd() {
+  document.getElementById('calc-add-panel').style.display = 'block';
+  document.getElementById('calc-add-btn').style.display = 'none';
+  const s = document.getElementById('calc-etf-search');
+  s.value = '';
+  onCalcSearch();        // 先顯示全部清單（未輸入也有結果）
+  setTimeout(() => s.focus(), 50);
+}
+// 收起新增面板
+function closeCalcAdd() {
+  const panel = document.getElementById('calc-add-panel');
+  if (panel) panel.style.display = 'none';
+  const btn = document.getElementById('calc-add-btn');
+  if (btn) btn.style.display = '';
 }
 
 function onCalcSearch() {
@@ -308,7 +320,7 @@ function onCalcSearch() {
   const dd = document.getElementById('calc-etf-dropdown');
   let list = getEtfDividends().filter(e => !calcPortfolio.some(p => p.code === e.code));
   if (q) list = list.filter(e => e.code.toLowerCase().includes(q) || e.name.toLowerCase().includes(q));
-  list = list.slice(0, 30);
+  list = list.slice(0, 40);
   if (list.length === 0) {
     dd.innerHTML = '<div class="etf-opt" style="color:#9ca3af">查無可加入的 ETF</div>';
   } else {
@@ -320,13 +332,15 @@ function onCalcSearch() {
     dd.querySelectorAll('.etf-opt[data-code]').forEach(el => {
       el.onclick = () => {
         const e = getEtfDividends().find(x => x.code === el.dataset.code);
-        if (e) { calcPortfolio.push({ ...e, zhang: 10, odd: 0 }); renderCalcPortfolio(); }
-        document.getElementById('calc-etf-search').value = '';
-        document.getElementById('calc-etf-dropdown').style.display = 'none';
+        if (e) {
+          calcPortfolio.push({ ...e, zhang: 10, odd: 0 });
+          renderCalcPortfolio();
+          showToast(`已加入 ${e.code} ${e.name}`);
+        }
+        closeCalcAdd();   // 選完自動收起，回到組合清單
       };
     });
   }
-  dd.style.display = 'block';
 }
 
 function calcOneEtf(p) {
@@ -343,12 +357,15 @@ function calcOneEtf(p) {
 
 function renderCalcPortfolio() {
   const wrap = document.getElementById('calc-portfolio');
+  const step2 = document.getElementById('calc-step2');
   if (calcPortfolio.length === 0) {
-    wrap.innerHTML = '<div class="calc-empty">尚未加入 ETF — 用上方搜尋加入你持有的 ETF</div>';
+    wrap.innerHTML = '<div class="calc-empty">👇 點下方「＋ 新增 ETF」加入你持有的 ETF</div>';
     document.getElementById('calc-summary').style.display = 'none';
+    if (step2) step2.style.display = 'none';
     document.getElementById('calc-note').innerHTML = '';
     return;
   }
+  if (step2) step2.style.display = '';
 
   wrap.innerHTML = calcPortfolio.map((p, i) => {
     const r = calcOneEtf(p);
