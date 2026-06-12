@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
 <meta name="theme-color" content="#10b981">
 <title>稀飯的 ETF 日報 — Prototype</title>
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style.css?v=25">
 </head>
 <body>
 
@@ -20,13 +20,13 @@
       </div>
     </div>
     <div class="header-stats">
-      <div><b>1,059</b>篇貼文</div>
+      <div><b>990</b>篇貼文</div>
       <div><b>12</b>主題</div>
       <div><b>每日</b>更新</div>
     </div>
   </header>
 
-  <div class="mock-banner">📌 Prototype v2.4 — 殖利率/除息/關注全接 CMoney 真實資料 · 關注可真加刪</div>
+  <div class="mock-banner">📌 Prototype v2.5 — 知識庫收錄 990 篇稀飯真實貼文 · 關注數即時連動</div>
 
   <main>
     <!-- ─────────── HOME ─────────── -->
@@ -70,7 +70,7 @@
         <a href="#watchlist" class="quick-link">
           <span class="ql-icon">⭐</span>
           <div class="ql-label">我的關注</div>
-          <div class="ql-sub">5 檔追蹤中</div>
+          <div class="ql-sub"><span id="home-wl-count">5</span> 檔追蹤中</div>
         </a>
         <a href="#rating" class="quick-link">
           <span class="ql-icon">🏆</span>
@@ -207,7 +207,7 @@
           <div class="community-avatar">🍚</div>
           <div style="flex:1">
             <h2>稀飯社團</h2>
-            <p>1,059 篇貼文 · 12 個主題 · 月更 100+</p>
+            <p>990 篇貼文 · 12 個主題 · 月更 100+</p>
           </div>
         </div>
         <div class="community-cta">加入稀飯付費社團（APP 內）· 月 NT$ 299 ↗</div>
@@ -390,7 +390,7 @@
         <div class="card-title">📚 1,059 篇 ETF 貼文</div>
         <div class="card-summary">
           IG 465 篇（32.1 個月跨度）+ FB 594 篇（11.9 個月跨度）<br>
-          結構化為 12 個主題知識庫，可包裝成課程 / ETF 評等 / 社團訂閱情報。
+          其中 990 篇實質內容結構化為 12 個主題知識庫，可包裝成課程 / ETF 評等 / 社團訂閱情報。
         </div>
       </div>
       <div class="card">
@@ -456,12 +456,12 @@
 
 </div>
 
-<script src="data/data.js?v=24"></script>
-<script src="data/etfs_extended.js?v=24"></script>
-<script src="data/etf_dividends.js?v=24"></script>
-<script src="data/all_etfs.js?v=24"></script>
-<script src="data/rating.js?v=24"></script>
-<script src="data/holdings.js?v=24"></script>
-<script src="js/app.js?v=24"></script>
+<script src="data/data.js?v=25"></script>
+<script src="data/etfs_extended.js?v=25"></script>
+<script src="data/etf_dividends.js?v=25"></script>
+<script src="data/all_etfs.js?v=25"></script>
+<script src="data/rating.js?v=25"></script>
+<script src="data/holdings.js?v=25"></script>
+<script src="js/app.js?v=25"></script>
 </body>
 </html>

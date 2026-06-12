@@ -139,7 +139,15 @@ window.showToast = showToast;
 
 // ─── Home view (now "工具") — purely static, no dynamic render needed
 function renderHome() {
-  // Tools-only page, all elements are in index.html. No dynamic content to render.
+  // Tools-only page; only dynamic bit is the live watchlist count on the ⭐ card.
+  // Count the same way renderWatchlist does (only codes present in ETFS_EXTENDED)
+  // so the homepage card and the watchlist page always agree.
+  const el = document.getElementById('home-wl-count');
+  if (el) {
+    const data = window.ETFS_EXTENDED || [];
+    const n = getWatchlist().filter(code => data.some(e => e.code === code)).length;
+    el.textContent = n;
+  }
 }
 
 function postCardHtml(p) {
@@ -202,6 +210,10 @@ function renderLibrary() {
 }
 
 // ─── Theme view ──────────────────────────────────────────────
+const THEME_PAGE_SIZE = 30;
+let _themeSorted = [];   // current theme's posts, sorted newest-first
+let _themeShown = 0;     // how many currently rendered
+
 function renderTheme(themeName) {
   if (!themeName) { showView('library'); return; }
 
@@ -222,10 +234,27 @@ function renderTheme(themeName) {
     return;
   }
 
-  document.getElementById('theme-posts').innerHTML = posts
-    .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
-    .map(p => postCardHtml(p))
-    .join('');
+  // Sort once, then page in batches so a 400+ post theme doesn't render an endless wall.
+  _themeSorted = [...posts].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  _themeShown = 0;
+  document.getElementById('theme-posts').innerHTML = '';
+  renderMoreThemePosts();
+}
+
+function renderMoreThemePosts() {
+  const container = document.getElementById('theme-posts');
+  const next = _themeSorted.slice(_themeShown, _themeShown + THEME_PAGE_SIZE);
+  // Remove any existing load-more button before appending
+  const oldBtn = document.getElementById('theme-more-btn');
+  if (oldBtn) oldBtn.remove();
+  container.insertAdjacentHTML('beforeend', next.map(p => postCardHtml(p)).join(''));
+  _themeShown += next.length;
+
+  const remaining = _themeSorted.length - _themeShown;
+  if (remaining > 0) {
+    container.insertAdjacentHTML('beforeend',
+      `<button id="theme-more-btn" class="load-more-btn" onclick="renderMoreThemePosts()">載入更多 · 還有 ${remaining} 篇</button>`);
+  }
 }
 
 // ─── Post detail view ────────────────────────────────────────
