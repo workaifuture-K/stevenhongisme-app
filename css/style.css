@@ -812,6 +812,18 @@ body {
   flex-shrink: 0;
 }
 
+.knowledge-banner {
+  display: flex; align-items: center; gap: 14px;
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  color: white;
+  padding: 16px 18px;
+  border-radius: 14px;
+  margin-bottom: 14px;
+}
+.knowledge-banner-icon { font-size: 32px; }
+.knowledge-banner-title { font-size: 15px; font-weight: 800; }
+.knowledge-banner-sub { font-size: 11px; opacity: 0.9; margin-top: 2px; }
+
 .vip-article {
   background: white;
   border-radius: 12px;

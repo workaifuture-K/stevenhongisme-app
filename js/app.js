@@ -64,9 +64,10 @@ function showView(viewName, param) {
   }
   view.classList.add('active');
 
-  // Update bottom nav
+  // Update bottom nav（知識內容已併入社團，theme/post/library 都高亮「社團」）
+  const navActiveView = ({ theme: 'community', post: 'community', library: 'community' })[viewName] || viewName;
   document.querySelectorAll('.nav-link').forEach(a => {
-    a.classList.toggle('active', a.dataset.view === viewName);
+    a.classList.toggle('active', a.dataset.view === navActiveView);
   });
 
   // Hide header on detail views
@@ -76,7 +77,7 @@ function showView(viewName, param) {
   // Per-view render
   switch (viewName) {
     case 'home': renderHome(); break;
-    case 'library': renderLibrary(); break;
+    case 'library': currentCommunitySub = 'knowledge'; showView('community'); return; // 知識併入社團，舊路由轉導
     case 'theme': renderTheme(param); break;
     case 'post': renderPost(param); break;
     case 'monetize': /* static */ break;
@@ -215,13 +216,13 @@ let _themeSorted = [];   // current theme's posts, sorted newest-first
 let _themeShown = 0;     // how many currently rendered
 
 function renderTheme(themeName) {
-  if (!themeName) { showView('library'); return; }
+  if (!themeName) { currentCommunitySub = 'knowledge'; showView('community'); return; }
 
   const posts = State.postsByTheme[themeName] || [];
   const emoji = THEME_EMOJI[themeName] || '📁';
 
   document.getElementById('theme-header').innerHTML = `
-    <div class="back-bar"><a href="#library">← 回知識庫</a></div>
+    <div class="back-bar"><a href="#community" onclick="currentCommunitySub='knowledge'">← 回知識區</a></div>
     <div style="padding:20px 4px 0">
       <div style="font-size:42px">${emoji}</div>
       <h2 style="font-size:22px;margin-top:6px;color:#111827">${escapeHtml(themeName)}</h2>
@@ -1184,7 +1185,42 @@ function renderCommunity() {
   const container = document.getElementById('community-content');
   if (currentCommunitySub === 'profile') container.innerHTML = renderProfileSub();
   else if (currentCommunitySub === 'vip') container.innerHTML = renderVipSub();
+  else if (currentCommunitySub === 'knowledge') container.innerHTML = renderKnowledgeSub();
   else if (currentCommunitySub === 'chat') container.innerHTML = renderChatSub();
+}
+
+// 知識區（原獨立「知識」分頁，現併入社團）
+function renderKnowledgeSub() {
+  // 今日重點：3 篇最新、來自 3 個不同主題（多樣性）
+  const sortedByDate = [...State.posts].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  const featured = [];
+  const seenThemes = new Set();
+  for (const p of sortedByDate) {
+    if (!seenThemes.has(p.theme)) {
+      featured.push(p);
+      seenThemes.add(p.theme);
+      if (featured.length >= 3) break;
+    }
+  }
+  const featuredHtml = featured.map(p => postCardHtml(p)).join('');
+  const themesHtml = State.themes.filter(t => t.post_count > 0).map(t => themeCardHtml(t)).join('');
+  const total = State.posts.length;
+
+  return `
+    <div class="knowledge-banner">
+      <div class="knowledge-banner-icon">📚</div>
+      <div style="flex:1">
+        <div class="knowledge-banner-title">稀飯知識庫</div>
+        <div class="knowledge-banner-sub">${total} 篇真實貼文 · 依 ${State.themes.filter(t => t.post_count > 0).length} 大 ETF / 存股主題分類</div>
+      </div>
+    </div>
+
+    <div class="section-title">📌 今日重點</div>
+    ${featuredHtml}
+
+    <div class="section-title">ETF / 存股主題</div>
+    <div class="grid-themes">${themesHtml}</div>
+  `;
 }
 
 // 稀飯專區
