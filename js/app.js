@@ -450,7 +450,7 @@ function renderYield() {
     const rankBadge = idx < 3 ? `<span class="rank-badge top">${idx + 1}</span>` : `<span class="rank-badge">${idx + 1}</span>`;
     const topTag = idx === 0 ? '<span class="ribbon">👑 殖利率王</span>' : '';
     return `
-      <div class="rank-row" onclick="showToast('${e.code} ${e.name} 詳細頁（mock）')">
+      <div class="rank-row" onclick="location.hash='#holdings/${e.code}'">
         ${rankBadge}
         <div class="rank-main">
           <div class="rank-code">${e.code} <span class="rank-name">${escapeHtml(e.name)}</span> ${topTag}</div>
@@ -486,15 +486,17 @@ function renderCalendar() {
     const monthDay = `${dateObj.getMonth()+1}/${dateObj.getDate()}`;
     const dateLabel = isPast ? '已除息' : daysUntil(d) === 0 ? '今日' : `${daysUntil(d)} 天後`;
 
-    const itemsHtml = items.map(e => `
-      <div class="cal-etf-row" onclick="showToast('${e.code} ${e.name} 詳細頁（mock）')">
+    const itemsHtml = items.map(e => {
+      const div = e.next_dividend != null ? e.next_dividend : e.last_dividend;
+      return `
+      <div class="cal-etf-row" onclick="location.hash='#holdings/${e.code}'">
         <div>
           <b>${e.code}</b> <span style="color:#6b7280">${escapeHtml(e.name)}</span>
           <span class="cal-payout-tag">${e.payout}</span>
         </div>
-        <div class="cal-amount">$ ${e.last_dividend} <span style="font-size:11px;color:#6b7280">/股</span></div>
-      </div>
-    `).join('');
+        <div class="cal-amount">配 $ ${div} <span style="font-size:11px;color:#6b7280">/股</span></div>
+      </div>`;
+    }).join('');
 
     return `
       <div class="cal-day ${isPast ? 'past' : ''}">
@@ -518,27 +520,47 @@ function daysUntil(dateStr) {
   return Math.round((target - today) / 86400000);
 }
 
-// ─── Watchlist ───────────────────────────────────────────────
-const DEFAULT_WATCHLIST = ['0050', '0056', '00878', '00929', '00919'];
+// ─── Watchlist（localStorage 持久化，真可加刪）───────────────
+const WL_KEY = 'sf_watchlist';
+function getWatchlist() {
+  try {
+    const s = localStorage.getItem(WL_KEY);
+    if (s) return JSON.parse(s);
+  } catch (e) {}
+  return ['0050', '0056', '00878', '00929', '00919']; // 預設
+}
+function setWatchlist(arr) {
+  try { localStorage.setItem(WL_KEY, JSON.stringify(arr)); } catch (e) {}
+}
 
 function renderWatchlist() {
   const data = window.ETFS_EXTENDED || [];
-  const watching = DEFAULT_WATCHLIST.map(code => data.find(e => e.code === code)).filter(Boolean);
+  const codes = getWatchlist();
+  const watching = codes.map(code => data.find(e => e.code === code)).filter(Boolean);
   document.getElementById('watchlist-count').textContent = watching.length;
+
+  // 新增搜尋面板（重用 calc 的展開模式）
+  bindWatchlistAdd();
+
+  if (watching.length === 0) {
+    document.getElementById('watchlist-list').innerHTML = '<div class="calc-empty">👇 點下方「＋ 新增 ETF」加入關注</div>';
+    return;
+  }
 
   const html = watching.map(e => {
     const changeClass = e.change_pct >= 0 ? 'pos' : 'neg';
     const changeIcon = e.change_pct >= 0 ? '▲' : '▼';
-    const daysToPayout = daysUntil(e.next_payout);
-    const payoutNote = daysToPayout > 0 ? `${daysToPayout} 天後除息` : daysToPayout === 0 ? '今日除息！' : '已除息';
+    const exStr = e.next_payout ? e.next_payout.slice(5) : '—';
+    const daysToPayout = e.next_payout ? daysUntil(e.next_payout) : null;
+    const payoutNote = daysToPayout == null ? '近期無' : daysToPayout > 0 ? `${daysToPayout} 天後` : daysToPayout === 0 ? '今日！' : '已除息';
     return `
-      <div class="wl-card" onclick="showToast('${e.code} ${e.name} 詳細頁（mock）')">
+      <div class="wl-card" onclick="location.hash='#holdings/${e.code}'">
         <div class="wl-header">
           <div>
             <div class="wl-code">${e.code}</div>
             <div class="wl-name">${escapeHtml(e.name)}</div>
           </div>
-          <button class="wl-remove" onclick="event.stopPropagation();showToast('已從關注移除 ${e.code} (mock)')">×</button>
+          <button class="wl-remove" onclick="event.stopPropagation();removeFromWatchlist('${e.code}')">×</button>
         </div>
         <div class="wl-stats">
           <div class="wl-stat">
@@ -548,19 +570,68 @@ function renderWatchlist() {
           </div>
           <div class="wl-stat">
             <div class="wl-stat-label">殖利率</div>
-            <div class="wl-stat-val">${e.yield_pct.toFixed(1)}<span style="font-size:12px">%</span></div>
+            <div class="wl-stat-val">${e.yield_pct != null ? e.yield_pct.toFixed(1) : '—'}<span style="font-size:12px">%</span></div>
             <div class="wl-stat-sub">${e.payout}</div>
           </div>
           <div class="wl-stat">
             <div class="wl-stat-label">下次除息</div>
-            <div class="wl-stat-val" style="font-size:14px">${e.next_payout.slice(5)}</div>
+            <div class="wl-stat-val" style="font-size:14px">${exStr}</div>
             <div class="wl-stat-sub">${payoutNote}</div>
           </div>
         </div>
-      </div>
-    `;
+      </div>`;
   }).join('');
   document.getElementById('watchlist-list').innerHTML = html;
+}
+
+function removeFromWatchlist(code) {
+  const arr = getWatchlist().filter(c => c !== code);
+  setWatchlist(arr);
+  showToast(`已移除 ${code}`);
+  renderWatchlist();
+}
+function addToWatchlist(code) {
+  const arr = getWatchlist();
+  if (arr.includes(code)) { showToast(`${code} 已在關注中`); return; }
+  arr.push(code);
+  setWatchlist(arr);
+  showToast(`已加入 ${code}`);
+  closeWatchlistAdd();
+  renderWatchlist();
+}
+
+function bindWatchlistAdd() {
+  const s = document.getElementById('wl-search');
+  if (s && !s.dataset.bound) {
+    s.dataset.bound = '1';
+    s.addEventListener('input', renderWatchlistSearch);
+    s.addEventListener('focus', renderWatchlistSearch);
+  }
+}
+function openWatchlistAdd() {
+  document.getElementById('wl-add-panel').style.display = 'block';
+  document.getElementById('wl-add-btn').style.display = 'none';
+  const s = document.getElementById('wl-search'); s.value = '';
+  renderWatchlistSearch();
+  setTimeout(() => s.focus(), 50);
+}
+function closeWatchlistAdd() {
+  const p = document.getElementById('wl-add-panel'); if (p) p.style.display = 'none';
+  const b = document.getElementById('wl-add-btn'); if (b) b.style.display = '';
+}
+function renderWatchlistSearch() {
+  const data = window.ETFS_EXTENDED || [];
+  const wl = getWatchlist();
+  const q = (document.getElementById('wl-search')?.value || '').trim().toLowerCase();
+  const dd = document.getElementById('wl-dropdown');
+  if (!dd) return;
+  let list = data.filter(e => !wl.includes(e.code));
+  if (q) list = list.filter(e => e.code.toLowerCase().includes(q) || e.name.toLowerCase().includes(q));
+  list = list.slice(0, 40);
+  dd.innerHTML = list.length ? list.map(e =>
+    `<div class="etf-opt" data-code="${e.code}"><b>${e.code}</b> ${escapeHtml(e.name)}<span class="etf-opt-tag">${e.payout} · 殖利率 ${e.yield_pct != null ? e.yield_pct + '%' : '—'}</span></div>`).join('')
+    : '<div class="etf-opt" style="color:#9ca3af">查無 ETF</div>';
+  dd.querySelectorAll('.etf-opt[data-code]').forEach(el => el.onclick = () => addToWatchlist(el.dataset.code));
 }
 
 // ─── Allocation by Age ───────────────────────────────────────

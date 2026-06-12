@@ -26,7 +26,7 @@
     </div>
   </header>
 
-  <div class="mock-banner">📌 Prototype v2.3 — 配置頁 ETF 分類改可折疊（預設收合）</div>
+  <div class="mock-banner">📌 Prototype v2.4 — 殖利率/除息/關注全接 CMoney 真實資料 · 關注可真加刪</div>
 
   <main>
     <!-- ─────────── HOME ─────────── -->
@@ -159,7 +159,7 @@
       <div class="back-bar"><a href="#home">← 回工具</a></div>
       <div style="padding:16px 4px 0">
         <h2 style="font-size:22px;color:#111827">📈 殖利率排行</h2>
-        <div style="font-size:13px;color:#6b7280;margin-top:4px">Top ETF by 年化殖利率（mock 即時資料）</div>
+        <div style="font-size:13px;color:#6b7280;margin-top:4px">Top ETF by 殖利率 · CMoney 真實配息資料</div>
       </div>
 
       <div class="filter-chips" id="yield-filters">
@@ -177,7 +177,7 @@
       <div class="back-bar"><a href="#home">← 回工具</a></div>
       <div style="padding:16px 4px 0">
         <h2 style="font-size:22px;color:#111827">📅 除息日曆</h2>
-        <div style="font-size:13px;color:#6b7280;margin-top:4px">未來 30 天 ETF 除息日（mock）</div>
+        <div style="font-size:13px;color:#6b7280;margin-top:4px">未來 30 天 ETF 除息日 · CMoney 真實資料</div>
       </div>
       <div id="calendar-list"></div>
     </section>
@@ -187,10 +187,17 @@
       <div class="back-bar"><a href="#home">← 回工具</a></div>
       <div style="padding:16px 4px 0">
         <h2 style="font-size:22px;color:#111827">⭐ 我的關注</h2>
-        <div style="font-size:13px;color:#6b7280;margin-top:4px"><span id="watchlist-count">5</span> 檔追蹤中 · 點 ETF 看詳細</div>
+        <div style="font-size:13px;color:#6b7280;margin-top:4px"><span id="watchlist-count">5</span> 檔追蹤中 · 點 ETF 看成分股 · × 移除</div>
       </div>
       <div id="watchlist-list"></div>
-      <button class="add-btn" onclick="showToast('完整版功能：+ 新增 ETF 到關注列表');return false;">+ 新增 ETF</button>
+      <button id="wl-add-btn" class="calc-add-btn" style="margin-top:10px" onclick="openWatchlistAdd()">＋ 新增 ETF</button>
+      <div id="wl-add-panel" class="calc-add-panel" style="display:none">
+        <div class="calc-add-panel-head">
+          <input type="text" id="wl-search" placeholder="搜尋代號或名稱加入關注" autocomplete="off">
+          <button class="calc-add-close" onclick="closeWatchlistAdd()">取消</button>
+        </div>
+        <div id="wl-dropdown" class="etf-dropdown" style="display:block;position:static;box-shadow:none;border:none;margin-top:8px"></div>
+      </div>
     </section>
 
     <!-- ─────────── COMMUNITY ─────────── -->
@@ -247,10 +254,13 @@
     <section id="view-rating" class="view">
       <div class="rating-hero">
         <h2>🏆 稀飯 ETF 評等</h2>
-        <p>34 檔主動式 ETF · 公式公開 · 用 CMoney 真實報酬算分</p>
+        <p>評 34 檔「主動式」ETF（經理人選股）· 公式公開 · CMoney 真實報酬算分</p>
       </div>
 
       <div class="card" style="font-size:12px;color:#4b5563;line-height:1.7">
+        <b style="color:#111827">為什麼只評「主動式」ETF？</b><br>
+        被動 ETF（0050、0056）是<b>跟著指數機械式選股</b>，買的人本來就知道會拿到什麼，比的是費用與追蹤誤差，不需要評「選股能力」。<br>
+        <b>主動式 ETF 是經理人主動選股</b>，34 檔誰強誰弱差很大，這才是評等真正有價值的地方 — 幫你判斷哪位經理人值得託付。<br><br>
         <b style="color:#111827">評等方法（權重公開，付費不能改分數）</b><br>
         績效 30%（近三月含息報酬）· 風險 20%（近期波動）· 配息 20%（殖利率）· 費用 15%（管理費）· 規模 15%（成立時間）<br>
         <span style="color:#9ca3af">等級：S（≥85）/ A（75-84）/ B（65-74）/ C（&lt;65）/ N（新檔資料未滿一季不評）。債券型以債券標準評績效。</span>
@@ -446,12 +456,12 @@
 
 </div>
 
-<script src="data/data.js?v=23"></script>
-<script src="data/etfs_extended.js?v=23"></script>
-<script src="data/etf_dividends.js?v=23"></script>
-<script src="data/all_etfs.js?v=23"></script>
-<script src="data/rating.js?v=23"></script>
-<script src="data/holdings.js?v=23"></script>
-<script src="js/app.js?v=23"></script>
+<script src="data/data.js?v=24"></script>
+<script src="data/etfs_extended.js?v=24"></script>
+<script src="data/etf_dividends.js?v=24"></script>
+<script src="data/all_etfs.js?v=24"></script>
+<script src="data/rating.js?v=24"></script>
+<script src="data/holdings.js?v=24"></script>
+<script src="js/app.js?v=24"></script>
 </body>
 </html>
