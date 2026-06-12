@@ -924,49 +924,60 @@ function renderRating() {
     </div>`;
 }
 
-// ─── Holdings (成分股) ───────────────────────────────────────
-let holdingsSelected = null;
+// ─── Holdings (成分股) — 雙向：ETF→成分股 / 個股→ETF ──────────
+let holdingsMode = 'etf';   // 'etf' = 看 ETF 持有什麼；'stock' = 看個股被誰持有
+let holdingsEtf = '0050';
+let holdingsStock = '2330';
 
-function renderHoldings(code) {
-  const H = window.ETF_HOLDINGS || {};
-  // 名稱對照（從 all_etfs / etf_dividends / active_etfs 找）
-  const nameOf = c => {
-    const a = (window.ALL_ETFS || []).find(x => x.code === c);
-    if (a) return a.name;
-    const d = (window.ETF_DIVIDENDS || []).find(x => x.code === c);
-    return d ? d.name : '';
-  };
+function HD() { return window.ETF_HOLDINGS_DATA || { holdings:{}, stock_index:{}, stock_names:{}, etf_names:{} }; }
 
-  if (code && H[code]) holdingsSelected = code;
-  if (!holdingsSelected) holdingsSelected = '0050';
+function renderHoldings(param) {
+  // param 可能是 ETF 代號（從評等卡點過來）
+  const d = HD();
+  if (param && d.holdings[param]) { holdingsMode = 'etf'; holdingsEtf = param; }
 
-  // 搜尋框 + 結果
+  // 綁定模式切換
+  document.querySelectorAll('#holdings-mode .chip').forEach(ch => {
+    ch.classList.toggle('active', ch.dataset.mode === holdingsMode);
+    ch.onclick = () => { holdingsMode = ch.dataset.mode; document.getElementById('holdings-search').value=''; renderHoldings(); };
+  });
+
   const searchEl = document.getElementById('holdings-search');
   if (searchEl && !searchEl.dataset.bound) {
     searchEl.dataset.bound = '1';
-    searchEl.addEventListener('input', () => renderHoldingsSearch());
-    searchEl.addEventListener('focus', () => renderHoldingsSearch());
+    searchEl.addEventListener('input', renderHoldingsSearch);
+    searchEl.addEventListener('focus', renderHoldingsSearch);
   }
+  searchEl.placeholder = holdingsMode === 'etf'
+    ? '搜尋 ETF 代號或名稱，例如 0050 / 高股息'
+    : '搜尋個股代號或名稱，例如 2330 / 台積電 / 聯電';
+
   renderHoldingsSearch();
-  renderHoldingsDetail(nameOf);
+  if (holdingsMode === 'etf') renderEtfHoldings();
+  else renderStockReverse();
 }
 
 function renderHoldingsSearch() {
-  const H = window.ETF_HOLDINGS || {};
+  const d = HD();
   const q = (document.getElementById('holdings-search')?.value || '').trim().toLowerCase();
   const dd = document.getElementById('holdings-dropdown');
   if (!dd) return;
   if (!q) { dd.style.display = 'none'; return; }
-  const names = window.ALL_ETFS || [];
-  let list = Object.keys(H).map(c => {
-    const a = names.find(x => x.code === c);
-    return { code: c, name: a ? a.name : '' };
-  }).filter(e => e.code.toLowerCase().includes(q) || e.name.toLowerCase().includes(q)).slice(0, 30);
+
+  let list;
+  if (holdingsMode === 'etf') {
+    list = Object.keys(d.holdings).map(c => ({ code: c, name: d.etf_names[c] || '' }))
+      .filter(e => e.code.toLowerCase().includes(q) || e.name.toLowerCase().includes(q)).slice(0, 30);
+  } else {
+    list = Object.keys(d.stock_index).map(s => ({ code: s, name: d.stock_names[s] || '' }))
+      .filter(e => e.code.toLowerCase().includes(q) || e.name.toLowerCase().includes(q))
+      .sort((a,b) => d.stock_index[b.code].length - d.stock_index[a.code].length).slice(0, 30);
+  }
   dd.innerHTML = list.length ? list.map(e =>
-    `<div class="etf-opt" data-code="${e.code}"><b>${e.code}</b> ${escapeHtml(e.name)}</div>`).join('')
-    : '<div class="etf-opt" style="color:#9ca3af">查無成分股資料</div>';
+    `<div class="etf-opt" data-code="${e.code}"><b>${e.code}</b> ${escapeHtml(e.name)}${holdingsMode==='stock'?`<span class="etf-opt-tag">${d.stock_index[e.code].length} 檔 ETF 持有</span>`:''}</div>`).join('')
+    : '<div class="etf-opt" style="color:#9ca3af">查無資料</div>';
   dd.querySelectorAll('.etf-opt[data-code]').forEach(el => el.onclick = () => {
-    holdingsSelected = el.dataset.code;
+    if (holdingsMode === 'etf') holdingsEtf = el.dataset.code; else holdingsStock = el.dataset.code;
     document.getElementById('holdings-search').value = '';
     dd.style.display = 'none';
     renderHoldings();
@@ -974,32 +985,75 @@ function renderHoldingsSearch() {
   dd.style.display = 'block';
 }
 
-function renderHoldingsDetail(nameOf) {
-  const H = window.ETF_HOLDINGS || {};
-  const code = holdingsSelected;
-  const holdings = H[code] || [];
-  const name = nameOf(code);
-  const top10sum = holdings.reduce((s, h) => s + h.w, 0);
+// ETF → 成分股
+function renderEtfHoldings() {
+  const d = HD();
+  const code = holdingsEtf;
+  const holdings = d.holdings[code] || [];
+  const name = d.etf_names[code] || '';
+  const sum = holdings.reduce((s, h) => s + h.w, 0);
+  const maxW = holdings.length ? holdings[0].w : 1;
 
   const rows = holdings.map((h, i) => `
-    <div class="hold-row">
+    <div class="hold-row" onclick="jumpToStock('${h.sym}')">
       <span class="hold-rank">${i + 1}</span>
       <div class="hold-bar-wrap">
         <div class="hold-name"><b>${h.sym}</b> ${escapeHtml(h.name)}</div>
-        <div class="hold-bar"><div class="hold-bar-fill" style="width:${Math.min(100, h.w / holdings[0].w * 100)}%"></div></div>
+        <div class="hold-bar"><div class="hold-bar-fill" style="width:${Math.min(100, h.w / maxW * 100)}%"></div></div>
       </div>
       <span class="hold-w">${h.w}%</span>
     </div>`).join('');
 
   document.getElementById('holdings-detail').innerHTML = `
     <div class="hold-card-head">
-      <div>
-        <div class="hold-code">${code} <span class="hold-cname">${escapeHtml(name)}</span></div>
-        <div class="hold-sub">前 ${holdings.length} 大成分股 · 合計 ${top10sum.toFixed(1)}%</div>
-      </div>
+      <div class="hold-code">${code} <span class="hold-cname">${escapeHtml(name)}</span></div>
+      <div class="hold-sub">前 ${holdings.length} 大成分股 · 合計 ${sum.toFixed(1)}%　·　點個股可反查</div>
     </div>
     ${rows || '<div class="calc-empty">查無成分股資料</div>'}
-    <div class="hold-note">📊 成分股資料來自 CMoney SQL（sysETFSHD），顯示權重前 10 大持股。共 ${Object.keys(H).length} 檔 ETF 可查。</div>`;
+    <div class="hold-note">📊 來自 CMoney SQL（sysETFSHD）前 15 大持股。共 ${Object.keys(d.holdings).length} 檔 ETF 可查。</div>`;
+}
+
+// 個股 → 哪些 ETF 持有（稀飯招牌套路）
+function renderStockReverse() {
+  const d = HD();
+  const sym = holdingsStock;
+  const etfs = d.stock_index[sym] || [];
+  const name = d.stock_names[sym] || '';
+  const maxW = etfs.length ? etfs[0].w : 1;
+
+  const rows = etfs.map((e, i) => `
+    <div class="hold-row" onclick="jumpToEtf('${e.etf}')">
+      <span class="hold-rank">${i + 1}</span>
+      <div class="hold-bar-wrap">
+        <div class="hold-name"><b>${e.etf}</b> ${escapeHtml(d.etf_names[e.etf] || '')}</div>
+        <div class="hold-bar"><div class="hold-bar-fill" style="width:${Math.min(100, e.w / maxW * 100)}%"></div></div>
+      </div>
+      <span class="hold-w">${e.w}%</span>
+    </div>`).join('');
+
+  document.getElementById('holdings-detail').innerHTML = `
+    <div class="hold-card-head">
+      <div class="hold-code">${sym} <span class="hold-cname">${escapeHtml(name)}</span></div>
+      <div class="hold-sub">被 ${etfs.length} 檔 ETF 列入前 15 大持股（含量高→低）　·　點 ETF 看全部成分股</div>
+    </div>
+    <div class="hold-reverse-intro">💡 看好 ${escapeHtml(name)} 但不想單壓個股？這些 ETF 含量最高，可間接持有又分散風險。</div>
+    ${rows || '<div class="calc-empty">查無持有此個股的 ETF（可能不在任何 ETF 前 15 大）</div>'}
+    <div class="hold-note">📊 來自 CMoney SQL（sysETFSHD）。僅統計個股在各 ETF「前 15 大」的情況，含量低的不列。</div>`;
+}
+
+// 從 ETF 成分股點個股 → 切到反查
+function jumpToStock(sym) {
+  const d = HD();
+  if (!d.stock_index[sym]) { showToast('此個股無反查資料'); return; }
+  holdingsMode = 'stock'; holdingsStock = sym;
+  renderHoldings();
+}
+// 從反查點 ETF → 切到成分股
+function jumpToEtf(code) {
+  const d = HD();
+  if (!d.holdings[code]) { showToast('此 ETF 無成分股資料'); return; }
+  holdingsMode = 'etf'; holdingsEtf = code;
+  renderHoldings();
 }
 
 // ─── Community (社團) — 3 sub-sections ──────────────────────

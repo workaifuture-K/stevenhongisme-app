@@ -26,7 +26,7 @@
     </div>
   </header>
 
-  <div class="mock-banner">📌 Prototype v2.0 — ETF 評等改真實算分（含C級）+ 成分股查詢</div>
+  <div class="mock-banner">📌 Prototype v2.1 — 成分股雙向查（ETF↔個股，稀飯招牌套路自動化）</div>
 
   <main>
     <!-- ─────────── HOME ─────────── -->
@@ -257,11 +257,15 @@
     <!-- ─────────── HOLDINGS (成分股) ─────────── -->
     <section id="view-holdings" class="view">
       <div class="rating-hero" style="background:linear-gradient(135deg,#06b6d4,#0891b2)">
-        <h2>🔍 ETF 成分股查詢</h2>
-        <p>看一檔 ETF 實際持有哪些股票 · CMoney 真實資料</p>
+        <h2>🔍 成分股查詢</h2>
+        <p>雙向查：ETF 持有哪些股 ↔ 個股被哪些 ETF 持有 · CMoney 真實資料</p>
+      </div>
+      <div class="filter-chips" id="holdings-mode" style="padding:0 0 12px">
+        <button class="chip active" data-mode="etf">ETF → 看成分股</button>
+        <button class="chip" data-mode="stock">個股 → 看哪些 ETF 持有</button>
       </div>
       <div style="position:relative">
-        <input type="text" id="holdings-search" placeholder="搜尋 ETF 代號或名稱，例如 0050 / 高股息" autocomplete="off" style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px;font-size:15px">
+        <input type="text" id="holdings-search" placeholder="搜尋..." autocomplete="off" style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px;font-size:15px">
         <div id="holdings-dropdown" class="etf-dropdown"></div>
       </div>
       <div id="holdings-detail" style="margin-top:14px"></div>
@@ -431,12 +435,12 @@
 
 </div>
 
-<script src="data/data.js?v=20"></script>
-<script src="data/etfs_extended.js?v=20"></script>
-<script src="data/etf_dividends.js?v=20"></script>
-<script src="data/all_etfs.js?v=20"></script>
-<script src="data/rating.js?v=20"></script>
-<script src="data/holdings.js?v=20"></script>
-<script src="js/app.js?v=20"></script>
+<script src="data/data.js?v=21"></script>
+<script src="data/etfs_extended.js?v=21"></script>
+<script src="data/etf_dividends.js?v=21"></script>
+<script src="data/all_etfs.js?v=21"></script>
+<script src="data/rating.js?v=21"></script>
+<script src="data/holdings.js?v=21"></script>
+<script src="js/app.js?v=21"></script>
 </body>
 </html>
