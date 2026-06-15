@@ -64,8 +64,8 @@ function showView(viewName, param) {
   }
   view.classList.add('active');
 
-  // Update bottom nav（知識/變現入口都在社團，theme/post/library/monetize 都高亮「社團」）
-  const navActiveView = ({ theme: 'community', post: 'community', library: 'community', monetize: 'community' })[viewName] || viewName;
+  // Update bottom nav（知識/變現入口在社團；回測是首頁工具 → 高亮「工具」）
+  const navActiveView = ({ theme: 'community', post: 'community', library: 'community', insight: 'community', monetize: 'community', backtest: 'home' })[viewName] || viewName;
   document.querySelectorAll('.nav-link').forEach(a => {
     a.classList.toggle('active', a.dataset.view === navActiveView);
   });
@@ -83,6 +83,8 @@ function showView(viewName, param) {
     case 'monetize': /* static */ break;
     case 'roi': /* static */ break;
     case 'calc': initCalc(); break;
+    case 'backtest': renderBacktest(); break;
+    case 'insight': renderInsight(); break;
     case 'yield': renderYield(); break;
     case 'calendar': renderCalendar(); break;
     case 'watchlist': renderWatchlist(); break;
@@ -478,6 +480,113 @@ function removeCalcEtf(i) {
 }
 
 function formatNum(n) { return Math.round(n).toLocaleString('en-US'); }
+
+// ─── 定期定額報酬回測 ────────────────────────────────────────
+const BT_MONTHS = { 3: 36, 5: 60, 10: 121 };
+let btCode = '0050';
+let btPeriod = null;
+
+function getReturns() { return window.ETF_RETURNS || []; }
+function btRec(code) { return getReturns().find(r => r.code === code); }
+
+function renderBacktest() {
+  const rec = btRec(btCode);
+  const lbl = document.getElementById('bt-etf-label');
+  if (lbl && rec) lbl.textContent = `${rec.code} ${rec.name}`;
+  bindBtSearch();
+
+  if (!rec) { document.getElementById('bt-result').innerHTML = '<div class="calc-empty">查無此 ETF 的回測資料</div>'; return; }
+
+  const avail = [3, 5, 10].filter(y => rec['dca' + y]);
+  if (!avail.length) {
+    document.getElementById('bt-period').innerHTML = '';
+    document.getElementById('bt-result').innerHTML = `<div class="calc-empty">「${rec.code} ${escapeHtml(rec.name)}」上市未滿 3 年，歷史不足以回測。換一檔成立較久的試試。</div>`;
+    document.getElementById('bt-note').innerHTML = '';
+    return;
+  }
+  if (!btPeriod || !avail.includes(btPeriod)) btPeriod = avail[avail.length - 1];
+
+  document.getElementById('bt-period').innerHTML = avail.map(y =>
+    `<button class="bt-chip ${y === btPeriod ? 'active' : ''}" onclick="setBtPeriod(${y})">${y} 年</button>`).join('');
+
+  const amount = parseInt(document.getElementById('bt-amount').value) || 10000;
+  const dca = rec['dca' + btPeriod];
+  const months = BT_MONTHS[btPeriod];
+  const invested = amount * months;
+  const finalVal = invested * dca.mult;
+  const profit = finalVal - invested;
+
+  document.getElementById('bt-result').innerHTML = `
+    <div class="bt-result-card">
+      <div class="bt-rc-head">${rec.code} ${escapeHtml(rec.name)} · 月扣 NT$ ${formatNum(amount)} × ${btPeriod} 年</div>
+      <div class="bt-big">
+        <div class="bt-big-val">NT$ ${formatNum(finalVal)}</div>
+        <div class="bt-big-label">期末市值（配息已再投入）</div>
+      </div>
+      <div class="bt-stats">
+        <div class="bt-stat"><div class="bt-stat-label">投入本金</div><div class="bt-stat-val">${formatNum(invested)}</div></div>
+        <div class="bt-stat"><div class="bt-stat-label">總獲利</div><div class="bt-stat-val ${profit >= 0 ? 'pos' : 'neg'}">${profit >= 0 ? '+' : ''}${formatNum(profit)}</div></div>
+        <div class="bt-stat"><div class="bt-stat-label">年化報酬</div><div class="bt-stat-val ${dca.ann >= 0 ? 'pos' : 'neg'}">${dca.ann}%</div></div>
+        <div class="bt-stat"><div class="bt-stat-label">過程最大回撤</div><div class="bt-stat-val neg">${dca.mdd}%</div></div>
+      </div>
+      <div class="bt-tsmc">台積電含量 <b>${rec.tsmc}%</b> · 近 3 年總報酬 <b>${rec.tr3 != null ? rec.tr3 + '%' : '—'}</b> · Sharpe <b>${rec.sharpe3 != null ? rec.sharpe3 : '—'}</b></div>
+    </div>
+    ${btCompareHtml(amount, btPeriod, rec)}`;
+
+  document.getElementById('bt-note').innerHTML = `💡 同樣月扣 NT$ ${formatNum(amount)}、存 ${btPeriod} 年，不同類型 ETF 滾出來差很多——關鍵不是配息率，是「總報酬」。台積電含量高的科技/市值型長期領先；高股息型波動小、但累積較慢（防禦型）。`;
+}
+
+function btCompareHtml(amount, period, rec) {
+  const bench = [['0052', '科技'], ['0050', '市值'], ['0056', '高股息']];
+  const months = BT_MONTHS[period];
+  const rows = bench.map(([c, tag]) => {
+    const r = btRec(c);
+    if (!r || !r['dca' + period]) return null;
+    return { code: c, tag, fv: amount * months * r['dca' + period].mult, self: c === rec.code };
+  }).filter(Boolean);
+  // 把目前選的這檔也放進來（若不在三個 benchmark 裡）
+  if (!rows.some(r => r.self) && rec['dca' + period]) {
+    rows.push({ code: rec.code, tag: '你選的', fv: amount * months * rec['dca' + period].mult, self: true });
+  }
+  if (rows.length < 2) return '';
+  rows.sort((a, b) => b.fv - a.fv);
+  const maxFv = Math.max(...rows.map(r => r.fv));
+  return `
+    <div class="bt-compare">
+      <div class="bt-compare-title">📊 同條件三類型對照</div>
+      ${rows.map(r => `
+        <div class="bt-cmp-row ${r.self ? 'self' : ''}">
+          <div class="bt-cmp-name"><span class="bt-cmp-tag">${r.tag}</span> ${r.code}</div>
+          <div class="bt-cmp-bar-wrap"><div class="bt-cmp-bar" style="width:${Math.max(6, Math.round(r.fv / maxFv * 100))}%"></div></div>
+          <div class="bt-cmp-val">${formatNum(r.fv)}</div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function setBtPeriod(y) { btPeriod = y; renderBacktest(); }
+function openBtPick() {
+  document.getElementById('bt-pick-panel').style.display = 'block';
+  const s = document.getElementById('bt-search'); s.value = ''; renderBtSearch();
+  setTimeout(() => s.focus(), 50);
+}
+function closeBtPick() { const p = document.getElementById('bt-pick-panel'); if (p) p.style.display = 'none'; }
+function bindBtSearch() {
+  const s = document.getElementById('bt-search');
+  if (s && !s.dataset.bound) { s.dataset.bound = '1'; s.addEventListener('input', renderBtSearch); }
+}
+function renderBtSearch() {
+  const q = (document.getElementById('bt-search')?.value || '').trim().toLowerCase();
+  const dd = document.getElementById('bt-dropdown'); if (!dd) return;
+  let list = getReturns().filter(r => r.dca3 || r.dca5 || r.dca10);
+  if (q) list = list.filter(r => r.code.toLowerCase().includes(q) || (r.name || '').toLowerCase().includes(q));
+  list = list.slice(0, 40);
+  dd.innerHTML = list.length ? list.map(r =>
+    `<div class="etf-opt" data-code="${r.code}"><b>${r.code}</b> ${escapeHtml(r.name)}<span class="etf-opt-tag">台積 ${r.tsmc}% · 3年 ${r.tr3 != null ? r.tr3 + '%' : '—'}</span></div>`).join('')
+    : '<div class="etf-opt" style="color:#9ca3af">查無可回測的 ETF</div>';
+  dd.querySelectorAll('.etf-opt[data-code]').forEach(el => {
+    el.onclick = () => { btCode = el.dataset.code; btPeriod = null; closeBtPick(); renderBacktest(); };
+  });
+}
 
 // ─── Yield Ranking ───────────────────────────────────────────
 let yieldFilter = 'all';
@@ -973,12 +1082,26 @@ const GRADE_DESC = {
   N: '觀察中（新檔未滿一季）',
 };
 
+// 報告對齊權重：研究指出殖利率對長期總報酬影響最小 → 降配息權重(20→10)、提報酬(30→40)
+const RATE_W = { perf: 0.40, risk: 0.20, div: 0.10, fee: 0.15, scale: 0.15 };
+function reGrade(t) { return t >= 85 ? 'S' : t >= 75 ? 'A' : t >= 65 ? 'B' : 'C'; }
+
 // 真實評等資料來源：window.RATING（CMoney SQL 算分）；無則 fallback 到手編 RATING_DATA
 function getRatingData() {
   const real = window.RATING;
-  if (!real || !real.length) return RATING_DATA;
-  // 補上短評（依分數特徵自動生成）
-  return real.map(r => ({ ...r, comment: r.comment || ratingComment(r) }));
+  const base = (!real || !real.length) ? RATING_DATA : real;
+  const H = (window.ETF_HOLDINGS_DATA && window.ETF_HOLDINGS_DATA.holdings) || {};
+  return base.map(r => {
+    const t = (H[r.code] || []).find(h => h.sym === '2330' || (h.name || '').includes('台積'));
+    const out = { ...r, tsmc: t ? t.w : null, comment: r.comment || ratingComment(r) };
+    // 用報告對齊權重重算（N 新檔不評分，維持原樣）
+    if (r.grade !== 'N' && r.scores) {
+      const s = r.scores;
+      out.total = Math.round(s.perf * RATE_W.perf + s.risk * RATE_W.risk + s.div * RATE_W.div + s.fee * RATE_W.fee + s.scale * RATE_W.scale);
+      out.grade = reGrade(out.total);
+    }
+    return out;
+  });
 }
 
 function ratingComment(r) {
@@ -1041,7 +1164,7 @@ function renderRating() {
           <div class="grade-badge" style="background:${g.bg}">${r.grade}</div>
           <div class="rate-meta">
             <div class="rate-code">${r.code} <span class="rate-name">${escapeHtml(r.name)}</span></div>
-            <div class="rate-ytd">${totalStr} · 報酬 <b>${r.ytd}</b></div>
+            <div class="rate-ytd">${totalStr}${r.ytd && !String(r.ytd).includes('nan') ? ' · 報酬 <b>' + r.ytd + '</b>' : ''}${r.tsmc != null ? ` · 台積電 <b>${r.tsmc}%</b>` : ''}</div>
           </div>
         </div>
         <div class="rate-dims">${bars}</div>
@@ -1051,6 +1174,10 @@ function renderRating() {
   }).join('');
 
   document.getElementById('rating-list').innerHTML =
+    `<div class="rate-method">
+       <b>📐 評分對齊 CMoney 報酬研究</b>　績效 40%・風險 20%・費用 15%・規模 15%・<span style="color:#d97706">配息僅 10%</span>。<br>
+       研究發現殖利率對長期總報酬影響最小（決策權重：台積電含量＞型別＞費用＞經理人＞配息率），故本評等<b>不重壓殖利率</b>，改看報酬體質與成本。卡片附台積電含量供參。
+     </div>` +
     `<div class="grade-header"><span class="grade-header-letter" style="background:${GRADE_STYLE[currentGrade].bg}">${currentGrade}</span>${GRADE_DESC[currentGrade]} · ${list.length} 檔</div>` +
     cardsHtml + `
     <div class="upsell" style="margin-top:16px">
@@ -1122,6 +1249,31 @@ function renderHoldingsSearch() {
 }
 
 // ETF → 成分股
+// 台積電含量「報酬關鍵指標」橫幅（呼應 CMoney 回測：台積電含量與報酬相關 0.774）
+function tsmcBanner(code) {
+  const d = HD();
+  const holdings = d.holdings[code] || [];
+  const t = holdings.find(h => h.sym === '2330' || (h.name || '').includes('台積'));
+  const w = t ? t.w : 0;
+  const ret = (window.ETF_RETURNS || []).find(r => r.code === code);
+  const tr3 = ret && ret.tr3 != null ? ret.tr3 + '%' : '—';
+  const sharpe = ret && ret.sharpe3 != null ? ret.sharpe3 : '—';
+  let level, color;
+  if (w >= 40) { level = '高'; color = '#dc2626'; }
+  else if (w >= 15) { level = '中'; color = '#d97706'; }
+  else if (w > 0) { level = '低'; color = '#0891b2'; }
+  else { level = '無'; color = '#6b7280'; }
+  return `
+    <div class="tsmc-banner" style="border-left-color:${color}">
+      <div class="tsmc-banner-main">
+        <div class="tsmc-banner-label">🔑 報酬關鍵指標 · 台積電含量</div>
+        <div class="tsmc-banner-val" style="color:${color}">${w}%<span class="tsmc-level" style="background:${color}">${level}</span></div>
+      </div>
+      <div class="tsmc-banner-side">近 3 年總報酬<br><b>${tr3}</b> · Sharpe <b>${sharpe}</b></div>
+    </div>
+    <div class="tsmc-hint">📈 CMoney 回測：「台積電含量」與 ETF 長期報酬相關度達 <b>0.774</b>，是第一驅動力。含量越高長期報酬通常越強、波動也越大；<a href="#backtest" data-view-link>用回測工具實測 →</a></div>`;
+}
+
 function renderEtfHoldings() {
   const d = HD();
   const code = holdingsEtf;
@@ -1130,21 +1282,24 @@ function renderEtfHoldings() {
   const sum = holdings.reduce((s, h) => s + h.w, 0);
   const maxW = holdings.length ? holdings[0].w : 1;
 
-  const rows = holdings.map((h, i) => `
-    <div class="hold-row" onclick="jumpToStock('${h.sym}')">
+  const rows = holdings.map((h, i) => {
+    const isTsmc = h.sym === '2330' || (h.name || '').includes('台積');
+    return `
+    <div class="hold-row ${isTsmc ? 'tsmc-row' : ''}" onclick="jumpToStock('${h.sym}')">
       <span class="hold-rank">${i + 1}</span>
       <div class="hold-bar-wrap">
-        <div class="hold-name"><b>${h.sym}</b> ${escapeHtml(h.name)}</div>
+        <div class="hold-name"><b>${h.sym}</b> ${escapeHtml(h.name)}${isTsmc ? ' <span class="tsmc-pill">報酬關鍵</span>' : ''}</div>
         <div class="hold-bar"><div class="hold-bar-fill" style="width:${Math.min(100, h.w / maxW * 100)}%"></div></div>
       </div>
       <span class="hold-w">${h.w}%</span>
-    </div>`).join('');
+    </div>`; }).join('');
 
   document.getElementById('holdings-detail').innerHTML = `
     <div class="hold-card-head">
       <div class="hold-code">${code} <span class="hold-cname">${escapeHtml(name)}</span></div>
       <div class="hold-sub">前 ${holdings.length} 大成分股 · 合計 ${sum.toFixed(1)}%　·　點個股可反查</div>
     </div>
+    ${tsmcBanner(code)}
     ${rows || '<div class="calc-empty">查無成分股資料</div>'}
     <div class="hold-note">📊 來自 CMoney SQL（sysETFSHD）前 15 大持股。共 ${Object.keys(d.holdings).length} 檔 ETF 可查。</div>`;
 }
@@ -1237,6 +1392,13 @@ function renderKnowledgeSub() {
         <div class="knowledge-banner-sub">${total} 篇真實貼文 · 依 ${State.themes.filter(t => t.post_count > 0).length} 大 ETF / 存股主題分類</div>
       </div>
     </div>
+
+    <a href="#insight" data-view-link class="insight-card">
+      <div class="insight-card-tag">🔬 編輯精選 · 數據研究</div>
+      <div class="insight-card-title">高股息 ETF 真的賺比較多嗎？</div>
+      <div class="insight-card-sub">10 年還原權息回測拆解：配息一樣多，總報酬卻輸一截——但這不代表高股息「爛」。看完你會更懂怎麼選。</div>
+      <div class="insight-card-cta">看完整分析 →</div>
+    </a>
 
     <div class="section-title">📌 今日重點</div>
     ${featuredHtml}
@@ -1423,6 +1585,74 @@ function renderChatSub() {
       <a href="#monetize" class="chat-locked-btn">立即加入</a>
     </div>
   `;
+}
+
+// ─── 旗艦研究文：高股息迷思 ───────────────────────────────────
+function renderInsight() {
+  // 從 returns.js 取現時 DCA 對照（活的數字）
+  const R = window.ETF_RETURNS || [];
+  const rec = c => R.find(x => x.code === c);
+  const dca10 = c => { const r = rec(c); return r && r.dca10 ? Math.round(r.dca10.mult * 121) : null; }; // 121萬投入→期末萬
+  const row = (c, name, tag) => {
+    const v = dca10(c); const r = rec(c);
+    return `<tr><td><span class="ins-tag">${tag}</span> ${c} ${name}</td><td>${r && r.tsmc != null ? r.tsmc + '%' : '—'}</td><td><b>${v ? v + ' 萬' : '—'}</b></td></tr>`;
+  };
+  document.getElementById('insight-content').innerHTML = `
+    <div class="back-bar"><a href="#community" onclick="currentCommunitySub='knowledge'">← 回知識區</a></div>
+    <article class="insight">
+      <div class="insight-kicker">🔬 數據研究 · CMoney 還原權息回測</div>
+      <h1>高股息 ETF 真的賺比較多嗎？</h1>
+      <p class="insight-lead">很多人選 ETF 第一個看殖利率。但「配得多」不等於「賺得多」。我們用 CMoney 還原權息資料，把 10 年定期定額拆給你看——結論可能跟你想的不一樣。</p>
+
+      <div class="insight-callout">
+        <b>📌 一句話結論</b><br>
+        高股息不是「賺較多」，而是一種「<b>低波動、防禦型</b>」的選擇。要累積資產，配息率不該是主要考量；要穩定現金流、抗波動，它才有價值。
+      </div>
+
+      <h2>① 報酬拆解：配息一樣多，總報酬卻差很大</h2>
+      <p>10 年期、配息全數再投入，三檔代表的總報酬拆成「價格 + 配息」：</p>
+      <table class="insight-table">
+        <thead><tr><th>ETF</th><th>總報酬</th><th>價格報酬</th><th>配息再投入</th></tr></thead>
+        <tbody>
+          <tr><td><span class="ins-tag tech">科技</span> 0052</td><td class="pos"><b>+1,357%</b></td><td>+945%</td><td>+412%</td></tr>
+          <tr><td><span class="ins-tag mkt">市值</span> 0050</td><td class="pos"><b>+741%</b></td><td>+512%</td><td>+228%</td></tr>
+          <tr><td><span class="ins-tag div">高息</span> 0056</td><td><b>+357%</b></td><td>+122%</td><td>+235%</td></tr>
+        </tbody>
+      </table>
+      <p class="insight-key">關鍵：0056 的「配息再投入 +235%」其實<b>跟 0050 的 +228% 差不多、甚至更高</b>。差距全出在<b>價格報酬</b>——0056 只漲 +122%，0050 漲了 +512%。<br>👉 高股息輸的不是配息，是「股價成長」。</p>
+
+      <h2>② 為什麼？台積電含量決定大半</h2>
+      <p>同一份研究發現，ETF 的「台積電含量」與長期報酬<b>相關度高達 0.774</b>，是第一驅動力。高股息 ETF 為了高殖利率，往往<b>不持有或少持有台積電</b>（0056、00878、00919 台積電含量都是 0%），自然少了這台成長引擎。</p>
+
+      <h2>③ 但高股息有它的好——它是「防禦」不是「輸」</h2>
+      <ul class="insight-list">
+        <li><b>波動更低</b>：高股息年化波動約 17%，科技/市值型 25% 以上。</li>
+        <li><b>跌得少</b>：2022 大跌年，高股息只跌約 10%，市值型跌逾 20%。</li>
+        <li><b>現金流穩</b>：季配/月配讓退休族每期有錢花，不必賣股。</li>
+      </ul>
+
+      <h2>④ 那你該選哪種？</h2>
+      <ul class="insight-list">
+        <li>🚀 <b>還在累積期（年輕、薪水會成長）</b>：時間站在你這邊，該看<b>總報酬</b>，市值型/科技型/搭一點槓桿。</li>
+        <li>🛡️ <b>要現金流、快退休、受不了大波動</b>：高股息的低波動 + 穩定配息正合適。</li>
+        <li>⚖️ <b>都想要</b>：核心市值型（0050/006208）打底 + 衛星高股息領息，是常見的平衡解。</li>
+      </ul>
+
+      <div class="insight-live">
+        <div class="insight-live-title">📊 現時回測：月扣 1 萬 × 10 年（CMoney 還原權息）</div>
+        <table class="insight-table">
+          <thead><tr><th>ETF</th><th>台積電含量</th><th>期末市值</th></tr></thead>
+          <tbody>
+            ${row('0052', '富邦科技', '科技')}
+            ${row('0050', '元大台灣50', '市值')}
+            ${row('0056', '元大高股息', '高息')}
+          </tbody>
+        </table>
+        <a href="#backtest" data-view-link class="insight-cta-btn">用回測工具換成你的數字 →</a>
+      </div>
+
+      <p class="insight-disclaimer">※ 資料來源 CMoney 還原權息收盤價，回測至 2026-06。歷史不代表未來，未計入手續費/稅，僅供研究參考，非投資建議。</p>
+    </article>`;
 }
 
 // ─── Utilities ───────────────────────────────────────────────

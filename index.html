@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
 <meta name="theme-color" content="#10b981">
 <title>稀飯的 ETF 日報 — Prototype</title>
-<link rel="stylesheet" href="css/style.css?v=30">
+<link rel="stylesheet" href="css/style.css?v=31">
 </head>
 <body>
 
@@ -26,7 +26,7 @@
     </div>
   </header>
 
-  <div class="mock-banner">📌 Prototype v2.10 — 補充保費占比重撈 CMSQL 核對（更新 9 檔最新公告 + 清 5 檔 NaN）</div>
+  <div class="mock-banner">📌 Prototype v3.0 — 新增定期定額報酬回測（真實還原權息）· 評等/成分股加台積電含量 · 高股息迷思專文</div>
 
   <main>
     <!-- ─────────── HOME ─────────── -->
@@ -44,7 +44,18 @@
         </div>
       </a>
 
-      <!-- Hero 2: 補充保費試算機 -->
+      <!-- Hero 2: 報酬回測（新）-->
+      <a href="#backtest" class="featured-tool" data-view-link style="background:linear-gradient(135deg,#7c3aed 0%,#6d28d9 100%);box-shadow:0 4px 12px rgba(124,58,237,0.25)">
+        <div class="ft-icon">📈</div>
+        <div class="ft-meta">
+          <div class="ft-badge">新功能</div>
+          <div class="ft-title">定期定額報酬回測</div>
+          <div class="ft-desc">月扣多少、存幾年、滾出多少？用 CMoney 還原權息真實歷史，算出期末市值、年化報酬、最大回撤。看清配息以外的「總報酬」真相。</div>
+          <div class="ft-cta" style="color:#ddd6fe">立即回測 →</div>
+        </div>
+      </a>
+
+      <!-- Hero 3: 補充保費試算機 -->
       <a href="#calc" class="featured-tool" data-view-link>
         <div class="ft-icon">🔢</div>
         <div class="ft-meta">
@@ -102,6 +113,11 @@
       <div id="post-content"></div>
     </section>
 
+    <!-- ─────────── INSIGHT（旗艦研究文）─────────── -->
+    <section id="view-insight" class="view">
+      <div id="insight-content"></div>
+    </section>
+
     <!-- ─────────── CALCULATOR ─────────── -->
     <section id="view-calc" class="view">
       <div class="calc-hero">
@@ -151,6 +167,45 @@
         含 50+ ETF 預估配息資料庫、年度試算、配息行事曆。
         <br>
         <a href="#monetize" class="upsell-cta" data-view-link>查看訂閱方案 →</a>
+      </div>
+    </section>
+
+    <!-- ─────────── BACKTEST（定期定額報酬回測）─────────── -->
+    <section id="view-backtest" class="view">
+      <div class="calc-hero" style="background:linear-gradient(135deg,#7c3aed 0%,#6d28d9 100%)">
+        <h2>📈 定期定額報酬回測</h2>
+        <p>選一檔 ETF、設定月扣金額與年數，用 CMoney 還原權息真實歷史，算出滾出多少、年化幾 %、過程最深跌多少。</p>
+      </div>
+
+      <div class="bt-controls">
+        <div class="bt-field">
+          <label>選 ETF</label>
+          <button id="bt-etf-btn" class="bt-select" onclick="openBtPick()"><span id="bt-etf-label">0050 元大台灣50</span> ▾</button>
+        </div>
+        <div class="bt-field">
+          <label>每月投入</label>
+          <div class="bt-amount"><span>NT$</span><input type="number" id="bt-amount" value="10000" min="1000" step="1000" oninput="renderBacktest()"></div>
+        </div>
+      </div>
+
+      <!-- ETF 選擇面板 -->
+      <div id="bt-pick-panel" class="calc-add-panel" style="display:none">
+        <div class="calc-add-panel-head">
+          <input type="text" id="bt-search" placeholder="輸入代號或名稱，例如 0050 / 科技" autocomplete="off">
+          <button class="calc-add-close" onclick="closeBtPick()">取消</button>
+        </div>
+        <div id="bt-dropdown" class="etf-dropdown" style="display:block;position:static;box-shadow:none;border:none;margin-top:8px"></div>
+      </div>
+
+      <div class="bt-period" id="bt-period"></div>
+
+      <div id="bt-result"></div>
+
+      <div class="calc-note" id="bt-note"></div>
+
+      <div class="upsell">
+        <b>💡 報酬回測說明</b><br>
+        以 CMoney 還原權息收盤價（配息自動再投入）回測，每月第一交易日定額買進、期末全部變現。實際投資含手續費、稅與折溢價，數字僅供研究參考，非投資建議。
       </div>
     </section>
 
@@ -457,12 +512,13 @@
 
 </div>
 
-<script src="data/data.js?v=30"></script>
-<script src="data/etfs_extended.js?v=30"></script>
-<script src="data/etf_dividends.js?v=30"></script>
-<script src="data/all_etfs.js?v=30"></script>
-<script src="data/rating.js?v=30"></script>
-<script src="data/holdings.js?v=30"></script>
-<script src="js/app.js?v=30"></script>
+<script src="data/data.js?v=31"></script>
+<script src="data/etfs_extended.js?v=31"></script>
+<script src="data/etf_dividends.js?v=31"></script>
+<script src="data/all_etfs.js?v=31"></script>
+<script src="data/rating.js?v=31"></script>
+<script src="data/holdings.js?v=31"></script>
+<script src="data/returns.js?v=31"></script>
+<script src="js/app.js?v=31"></script>
 </body>
 </html>
