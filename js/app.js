@@ -1422,7 +1422,7 @@ function jumpToEtf(code) {
 }
 
 // ─── Community (社團) — 3 sub-sections ──────────────────────
-let currentCommunitySub = 'profile';
+let currentCommunitySub = 'vip';
 
 function renderCommunity() {
   // Wire up sub tabs
