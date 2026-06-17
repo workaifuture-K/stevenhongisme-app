@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
 <meta name="theme-color" content="#10b981">
 <title>稀飯的 ETF 日報 — Prototype</title>
-<link rel="stylesheet" href="css/style.css?v=37">
+<link rel="stylesheet" href="css/style.css?v=38">
 </head>
 <body>
 
@@ -26,7 +26,7 @@
     </div>
   </header>
 
-  <div class="mock-banner">📌 Prototype v3.1 — 個股風暴·經理人問責（每日揭露持股還原 19 檔主動式 ETF 砍倉紀律）· 評等加跌勢紀律分</div>
+  <div class="mock-banner">📌 Prototype v3.2 — 個股風暴改用公認標準偵測（峰到谷回撤＋20%熊市＋σ標準化＋跌停）· 19 檔主動式 ETF 問責</div>
 
   <main>
     <!-- ─────────── HOME ─────────── -->
@@ -248,7 +248,8 @@
 
       <div class="upsell">
         <b>🔬 方法</b><br>
-        範圍為 CMoney 官方分類「主動式國內股票型」19 檔（ETF 基本資料表）。以「ETF 持股明細表」每日揭露的張數，比對崩跌區間（含崩前 8 個交易日）各主動式 ETF 對該股的減碼幅度與首次減碼日。最穩健的訊號是「減碼幅度」與「四象限」；「提前減碼」若落在區間邊界，可能含例行調整，僅供參考。權重越重、砍得越慢，跌勢拖累越大。僅供研究，非投資建議。
+        <b>崩跌事件怎麼挑</b>：用「峰到谷回撤」找事件（高點→谷底，<b>視窗由資料決定</b>，非固定天數）；門檻為跌幅 <b>≥20%（熊市等級）</b> 且 <b>≥2σ</b>（用個股自身波動標準化，過濾掉小型股的日常震盪），再標注跌停天數。範圍限 CMoney 官方分類「主動式國內股票型」19 檔。<br>
+        <b>經理人反應怎麼算</b>：以「ETF 持股明細表」每日揭露張數，比對崩跌區間（含崩前 8 交易日）各 ETF 對該股的減碼幅度與首次減碼日。最穩健的是「減碼幅度」與「四象限」；邊界的「提前減碼」可能含例行調整，僅供參考。僅供研究，非投資建議。
       </div>
     </section>
 
@@ -556,14 +557,14 @@
 
 </div>
 
-<script src="data/data.js?v=37"></script>
-<script src="data/etfs_extended.js?v=37"></script>
-<script src="data/etf_dividends.js?v=37"></script>
-<script src="data/all_etfs.js?v=37"></script>
-<script src="data/rating.js?v=37"></script>
-<script src="data/holdings.js?v=37"></script>
-<script src="data/returns.js?v=37"></script>
-<script src="data/events.js?v=37"></script>
-<script src="js/app.js?v=37"></script>
+<script src="data/data.js?v=38"></script>
+<script src="data/etfs_extended.js?v=38"></script>
+<script src="data/etf_dividends.js?v=38"></script>
+<script src="data/all_etfs.js?v=38"></script>
+<script src="data/rating.js?v=38"></script>
+<script src="data/holdings.js?v=38"></script>
+<script src="data/returns.js?v=38"></script>
+<script src="data/events.js?v=38"></script>
+<script src="js/app.js?v=38"></script>
 </body>
 </html>

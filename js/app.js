@@ -643,6 +643,11 @@ function renderStorm() {
     <div class="storm-summary">
       <div class="storm-sum-head">${e.code} ${escapeHtml(e.name)}　<span class="storm-dd">${e.dd}%</span></div>
       <div class="storm-sum-sub">${fmtMd(e.peak_date)} ${formatNum(e.peak)} → ${fmtMd(e.trough_date)} ${formatNum(e.trough)} · ${e.n_etf} 檔主動式 ETF 持有</div>
+      ${e.sigma != null ? `<div class="storm-sum-metrics">
+        <span title="峰到谷歷時（資料決定，非固定視窗）">📉 ${e.dur} 個交易日</span>
+        <span title="跌幅相對該股平常波動的倍數，≥2σ 才算異常崩跌">📊 ${e.sigma}σ 異常</span>
+        ${e.limitdown > 0 ? `<span title="期間跌停天數">🔻 ${e.limitdown} 天跌停</span>` : ''}
+      </div>` : ''}
       <div class="storm-sum-stat">
         <span class="ss-good">✓ ${cut} 檔有減碼</span>
         <span class="ss-bad">⚠️ ${frozen} 檔重壓僵住</span>
