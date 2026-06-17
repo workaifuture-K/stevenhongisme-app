@@ -65,7 +65,7 @@ function showView(viewName, param) {
   view.classList.add('active');
 
   // Update bottom nav（知識/變現入口在社團；回測是首頁工具 → 高亮「工具」）
-  const navActiveView = ({ theme: 'community', post: 'community', library: 'community', insight: 'community', monetize: 'community', backtest: 'home', storm: 'home' })[viewName] || viewName;
+  const navActiveView = ({ theme: 'community', post: 'community', library: 'community', insight: 'community', monetize: 'community' })[viewName] || viewName;
   document.querySelectorAll('.nav-link').forEach(a => {
     a.classList.toggle('active', a.dataset.view === navActiveView);
   });
