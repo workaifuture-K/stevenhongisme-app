@@ -192,6 +192,13 @@ body {
 .quick-link .ql-icon { font-size: 28px; display: block; margin-bottom: 6px; }
 .quick-link .ql-label { font-size: 13px; font-weight: 600; }
 .quick-link .ql-sub { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+/* 4 張招牌小卡：專屬底色（白字）*/
+.quick-link.qc { color: white; border: none; }
+.quick-link.qc .ql-sub { color: rgba(255,255,255,0.88); }
+.quick-link.qc-cyan { background: linear-gradient(135deg,#06b6d4,#0891b2); }
+.quick-link.qc-purple { background: linear-gradient(135deg,#7c3aed,#6d28d9); }
+.quick-link.qc-indigo { background: linear-gradient(135deg,#6366f1,#8b5cf6); }
+.quick-link.qc-red { background: linear-gradient(135deg,#dc2626,#b91c1c); }
 
 /* Theme grid */
 .grid-themes {
