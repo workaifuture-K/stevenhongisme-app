@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
 <meta name="theme-color" content="#10b981">
 <title>稀飯的 ETF 日報 — Prototype</title>
-<link rel="stylesheet" href="css/style.css?v=31">
+<link rel="stylesheet" href="css/style.css?v=32">
 </head>
 <body>
 
@@ -26,7 +26,7 @@
     </div>
   </header>
 
-  <div class="mock-banner">📌 Prototype v3.0 — 新增定期定額報酬回測（真實還原權息）· 評等/成分股加台積電含量 · 高股息迷思專文</div>
+  <div class="mock-banner">📌 Prototype v3.1 — 個股風暴·經理人問責（每日揭露持股還原 19 檔主動式 ETF 砍倉紀律）· 評等加跌勢紀律分</div>
 
   <main>
     <!-- ─────────── HOME ─────────── -->
@@ -63,6 +63,17 @@
           <div class="ft-title">補充保費試算機</div>
           <div class="ft-desc">選 ETF + 持有部位（含零股）→ 立刻算出是否課 2.11% 補充保費 / 需持有多少張股會觸發。配息資料接 CMoney 真實 202 檔。</div>
           <div class="ft-cta">立即試算 →</div>
+        </div>
+      </a>
+
+      <!-- Hero 4: 個股風暴 → 經理人問責（新）-->
+      <a href="#storm" class="featured-tool" data-view-link style="background:linear-gradient(135deg,#dc2626 0%,#b91c1c 100%);box-shadow:0 4px 12px rgba(220,38,38,0.25)">
+        <div class="ft-icon">⚡</div>
+        <div class="ft-meta">
+          <div class="ft-badge">獨家</div>
+          <div class="ft-title">個股風暴 · 經理人問責</div>
+          <div class="ft-desc">健策、貿聯崩跌時，你買的主動式 ETF 經理人砍了沒？用每日揭露持股還原 19 檔主動式 ETF 的真實進出——名稱叫「主動」，操作是不是真主動。</div>
+          <div class="ft-cta" style="color:#fecaca">看經理人反應 →</div>
         </div>
       </a>
 
@@ -206,6 +217,24 @@
       <div class="upsell">
         <b>💡 報酬回測說明</b><br>
         以 CMoney 還原權息收盤價（配息自動再投入）回測，每月第一交易日定額買進、期末全部變現。實際投資含手續費、稅與折溢價，數字僅供研究參考，非投資建議。
+      </div>
+    </section>
+
+    <!-- ─────────── STORM（個股風暴 → 經理人問責）─────────── -->
+    <section id="view-storm" class="view">
+      <div class="calc-hero" style="background:linear-gradient(135deg,#dc2626 0%,#b91c1c 100%)">
+        <h2>⚡ 個股風暴 · 經理人問責</h2>
+        <p>挑一個崩跌事件，看 19 檔純台股主動式 ETF 的經理人在跌勢中「砍了沒、砍多快」。資料來自每日揭露持股——名稱叫「主動」，操作是不是真主動。</p>
+      </div>
+
+      <div class="storm-events" id="storm-events"></div>
+      <div id="storm-detail"></div>
+
+      <div class="calc-note" id="storm-note"></div>
+
+      <div class="upsell">
+        <b>🔬 方法</b><br>
+        範圍為 CMoney 官方分類「主動式國內股票型」19 檔（ETF 基本資料表）。以「ETF 持股明細表」每日揭露的張數，比對崩跌區間（含崩前 8 個交易日）各主動式 ETF 對該股的減碼幅度與首次減碼日。最穩健的訊號是「減碼幅度」與「四象限」；「提前減碼」若落在區間邊界，可能含例行調整，僅供參考。權重越重、砍得越慢，跌勢拖累越大。僅供研究，非投資建議。
       </div>
     </section>
 
@@ -512,13 +541,14 @@
 
 </div>
 
-<script src="data/data.js?v=31"></script>
-<script src="data/etfs_extended.js?v=31"></script>
-<script src="data/etf_dividends.js?v=31"></script>
-<script src="data/all_etfs.js?v=31"></script>
-<script src="data/rating.js?v=31"></script>
-<script src="data/holdings.js?v=31"></script>
-<script src="data/returns.js?v=31"></script>
-<script src="js/app.js?v=31"></script>
+<script src="data/data.js?v=32"></script>
+<script src="data/etfs_extended.js?v=32"></script>
+<script src="data/etf_dividends.js?v=32"></script>
+<script src="data/all_etfs.js?v=32"></script>
+<script src="data/rating.js?v=32"></script>
+<script src="data/holdings.js?v=32"></script>
+<script src="data/returns.js?v=32"></script>
+<script src="data/events.js?v=32"></script>
+<script src="js/app.js?v=32"></script>
 </body>
 </html>

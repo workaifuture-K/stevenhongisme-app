@@ -1252,6 +1252,46 @@ body {
   padding: 12px 14px; margin-bottom: 14px; font-size: 12px; color: #166534; line-height: 1.8;
 }
 .rate-method b { color: #15803d; }
+
+/* ─── 個股風暴 → 經理人問責 ─── */
+.storm-events { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 10px; margin-bottom: 6px; -webkit-overflow-scrolling: touch; }
+.storm-chip {
+  flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-start;
+  background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 8px 12px; cursor: pointer; min-width: 96px;
+}
+.storm-chip.active { border-color: #dc2626; background: #fef2f2; }
+.sc-name { font-size: 12px; font-weight: 700; color: #374151; white-space: nowrap; }
+.sc-dd { font-size: 15px; font-weight: 800; color: #dc2626; margin-top: 2px; }
+.storm-summary { background: #fef2f2; border: 1px solid #fecaca; border-radius: 14px; padding: 14px 16px; margin-bottom: 14px; }
+.storm-sum-head { font-size: 18px; font-weight: 800; color: #111827; display: flex; align-items: center; }
+.storm-dd { color: #dc2626; font-size: 16px; }
+.storm-sum-sub { font-size: 12px; color: #6b7280; margin-top: 4px; }
+.storm-sum-stat { display: flex; gap: 14px; margin-top: 10px; font-size: 13px; font-weight: 700; }
+.ss-good { color: #059669; } .ss-bad { color: #dc2626; }
+.storm-cards { display: flex; flex-direction: column; gap: 10px; }
+.storm-card { background: white; border: 1px solid #e5e7eb; border-left: 4px solid #6b7280; border-radius: 12px; padding: 12px 14px; }
+.storm-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.storm-etf { font-size: 14px; font-weight: 800; color: #111827; }
+.storm-etf-name { font-size: 12px; font-weight: 500; color: #6b7280; }
+.storm-quad { font-size: 11px; font-weight: 700; border-radius: 6px; padding: 3px 8px; }
+.storm-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.sm { text-align: center; }
+.sm-l { font-size: 10px; color: #9ca3af; }
+.sm-v { font-size: 15px; font-weight: 800; color: #111827; margin-top: 2px; }
+.sm-v.good { color: #059669; } .sm-v.bad { color: #9ca3af; }
+
+/* 評等卡：跌勢紀律列 */
+.rate-disc {
+  display: flex; align-items: center; gap: 10px; text-decoration: none;
+  background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px;
+  padding: 8px 12px; margin: 10px 0; cursor: pointer;
+}
+.rate-disc-l { font-size: 12px; font-weight: 700; color: #b91c1c; flex-shrink: 0; }
+.rate-disc-sub { font-size: 10px; color: #9ca3af; font-weight: 500; }
+.rate-disc-bar { flex: 1; height: 8px; background: #fee2e2; border-radius: 6px; overflow: hidden; }
+.rate-disc-fill { height: 100%; border-radius: 6px; }
+.rate-disc-v { font-size: 16px; font-weight: 800; color: #111827; flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; line-height: 1.1; }
+.rate-disc-rate { font-size: 9px; color: #9ca3af; font-weight: 600; }
 .calc-add-panel {
   background: white; border: 1px solid #d1d5db;
   border-radius: 12px; padding: 14px; margin-bottom: 12px;

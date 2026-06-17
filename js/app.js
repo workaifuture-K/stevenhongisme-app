@@ -65,7 +65,7 @@ function showView(viewName, param) {
   view.classList.add('active');
 
   // Update bottom nav（知識/變現入口在社團；回測是首頁工具 → 高亮「工具」）
-  const navActiveView = ({ theme: 'community', post: 'community', library: 'community', insight: 'community', monetize: 'community', backtest: 'home' })[viewName] || viewName;
+  const navActiveView = ({ theme: 'community', post: 'community', library: 'community', insight: 'community', monetize: 'community', backtest: 'home', storm: 'home' })[viewName] || viewName;
   document.querySelectorAll('.nav-link').forEach(a => {
     a.classList.toggle('active', a.dataset.view === navActiveView);
   });
@@ -84,6 +84,7 @@ function showView(viewName, param) {
     case 'roi': /* static */ break;
     case 'calc': initCalc(); break;
     case 'backtest': renderBacktest(); break;
+    case 'storm': renderStorm(); break;
     case 'insight': renderInsight(); break;
     case 'yield': renderYield(); break;
     case 'calendar': renderCalendar(); break;
@@ -588,6 +589,69 @@ function renderBtSearch() {
   });
 }
 
+// ─── 個股風暴 → 經理人問責 ──────────────────────────────────
+let stormIdx = 0;
+const QUAD_STYLE = {
+  '重壓快砍': { c: '#059669', bg: '#d1fae5' },
+  '重壓僵住': { c: '#dc2626', bg: '#fee2e2' },
+  '輕押機警': { c: '#0891b2', bg: '#cffafe' },
+  '隨波': { c: '#6b7280', bg: '#f3f4f6' },
+};
+function getEvents() { return window.ETF_EVENTS || []; }
+function fmtMd(s) { return s && s.length === 8 ? `${s.slice(4, 6)}/${s.slice(6, 8)}` : (s || '—'); }
+function fmtReact(d) {
+  if (d == null) return '未動';
+  if (d < 0) return `提前 ${-d} 天`;
+  if (d === 0) return '當天';
+  return `落後 ${d} 天`;
+}
+
+function renderStorm() {
+  const events = getEvents();
+  if (!events.length) { document.getElementById('storm-detail').innerHTML = '<div class="calc-empty">尚無風暴事件資料</div>'; return; }
+  if (stormIdx >= events.length) stormIdx = 0;
+
+  document.getElementById('storm-events').innerHTML = events.map((e, i) =>
+    `<button class="storm-chip ${i === stormIdx ? 'active' : ''}" onclick="setStorm(${i})">
+       <span class="sc-name">${e.code} ${escapeHtml(e.name)}</span>
+       <span class="sc-dd">${e.dd}%</span>
+     </button>`).join('');
+
+  const e = events[stormIdx];
+  const cut = e.etfs.filter(x => x.cut_pct >= 15).length;
+  const frozen = e.etfs.filter(x => x.w0 >= 3 && x.cut_pct < 15).length;
+  const cards = e.etfs.map(x => {
+    const q = QUAD_STYLE[x.quad] || QUAD_STYLE['隨波'];
+    return `
+      <div class="storm-card" style="border-left-color:${q.c}">
+        <div class="storm-card-top">
+          <div class="storm-etf">${x.etf} <span class="storm-etf-name">${escapeHtml(x.name)}</span></div>
+          <span class="storm-quad" style="background:${q.bg};color:${q.c}">${x.quad}</span>
+        </div>
+        <div class="storm-metrics">
+          <div class="sm"><div class="sm-l">事前權重</div><div class="sm-v">${x.w0}%</div></div>
+          <div class="sm"><div class="sm-l">最大減碼</div><div class="sm-v ${x.cut_pct >= 15 ? 'good' : 'bad'}">${x.cut_pct > 0 ? x.cut_pct + '%' : '未砍'}</div></div>
+          <div class="sm"><div class="sm-l">首次減碼</div><div class="sm-v">${fmtMd(x.first_cut)}</div></div>
+          <div class="sm"><div class="sm-l">減碼時點</div><div class="sm-v ${x.react_days != null && x.react_days < 0 ? 'good' : ''}">${fmtReact(x.react_days)}</div></div>
+        </div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('storm-detail').innerHTML = `
+    <div class="storm-summary">
+      <div class="storm-sum-head">${e.code} ${escapeHtml(e.name)}　<span class="storm-dd">${e.dd}%</span></div>
+      <div class="storm-sum-sub">${fmtMd(e.peak_date)} ${formatNum(e.peak)} → ${fmtMd(e.trough_date)} ${formatNum(e.trough)} · ${e.n_etf} 檔主動式 ETF 持有</div>
+      <div class="storm-sum-stat">
+        <span class="ss-good">✓ ${cut} 檔有減碼</span>
+        <span class="ss-bad">⚠️ ${frozen} 檔重壓僵住</span>
+      </div>
+    </div>
+    <div class="storm-cards">${cards}</div>`;
+
+  document.getElementById('storm-note').innerHTML = `💡 同樣持有「${escapeHtml(e.name)}」，有人第一時間砍、有人抱到底——這就是「主動」ETF 真正的差別。把多次風暴累積起來，就是經理人的「跌勢紀律」（見 <a href="#rating" data-view-link>ETF 評等</a>）。`;
+}
+function setStorm(i) { stormIdx = i; renderStorm(); }
+
 // ─── Yield Ranking ───────────────────────────────────────────
 let yieldFilter = 'all';
 
@@ -1091,9 +1155,10 @@ function getRatingData() {
   const real = window.RATING;
   const base = (!real || !real.length) ? RATING_DATA : real;
   const H = (window.ETF_HOLDINGS_DATA && window.ETF_HOLDINGS_DATA.holdings) || {};
+  const DISC = window.ETF_DISCIPLINE || {};
   return base.map(r => {
     const t = (H[r.code] || []).find(h => h.sym === '2330' || (h.name || '').includes('台積'));
-    const out = { ...r, tsmc: t ? t.w : null, comment: r.comment || ratingComment(r) };
+    const out = { ...r, tsmc: t ? t.w : null, disc: DISC[r.code] || null, comment: r.comment || ratingComment(r) };
     // 用報告對齊權重重算（N 新檔不評分，維持原樣）
     if (r.grade !== 'N' && r.scores) {
       const s = r.scores;
@@ -1168,6 +1233,12 @@ function renderRating() {
           </div>
         </div>
         <div class="rate-dims">${bars}</div>
+        ${r.disc ? `
+        <a href="#storm" data-view-link class="rate-disc" onclick="event.stopPropagation()">
+          <div class="rate-disc-l">⚡ 跌勢紀律 <span class="rate-disc-sub">${r.disc.events} 次風暴</span></div>
+          <div class="rate-disc-bar"><div class="rate-disc-fill" style="width:${r.disc.score}%;background:${r.disc.score >= 70 ? '#059669' : r.disc.score >= 40 ? '#d97706' : '#dc2626'}"></div></div>
+          <div class="rate-disc-v">${r.disc.score}<span class="rate-disc-rate">砍倉率 ${r.disc.cut_rate}%</span></div>
+        </a>` : ''}
         <div class="rate-comment">🍚 ${escapeHtml(r.comment)}</div>
         ${hasHoldings ? `<a href="#holdings/${r.code}" class="rate-holdings-link" onclick="event.stopPropagation()">查看成分股 →</a>` : ''}
       </div>`;
@@ -1176,7 +1247,8 @@ function renderRating() {
   document.getElementById('rating-list').innerHTML =
     `<div class="rate-method">
        <b>📐 評分對齊 CMoney 報酬研究</b>　績效 40%・風險 20%・費用 15%・規模 15%・<span style="color:#d97706">配息僅 10%</span>。<br>
-       研究發現殖利率對長期總報酬影響最小（決策權重：台積電含量＞型別＞費用＞經理人＞配息率），故本評等<b>不重壓殖利率</b>，改看報酬體質與成本。卡片附台積電含量供參。
+       研究發現殖利率對長期總報酬影響最小，故本評等<b>不重壓殖利率</b>，改看報酬體質與成本。<br>
+       ⚡ <b>跌勢紀律</b>是全市場唯一指標：用每日揭露持股，還原經理人在 12 次個股崩跌中「砍了沒、砍多快」——主動式 ETF 的「主動」要看這個（點卡片紀律列看明細）。
      </div>` +
     `<div class="grade-header"><span class="grade-header-letter" style="background:${GRADE_STYLE[currentGrade].bg}">${currentGrade}</span>${GRADE_DESC[currentGrade]} · ${list.length} 檔</div>` +
     cardsHtml + `
