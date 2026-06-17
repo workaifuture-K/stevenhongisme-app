@@ -95,7 +95,9 @@ function showView(viewName, param) {
     case 'holdings': renderHoldings(param); break;
   }
 
-  // Scroll to top
+  // Scroll the content area (main) back to top on view change
+  const scroller = document.querySelector('.app > main');
+  if (scroller) scroller.scrollTop = 0;
   window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
