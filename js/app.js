@@ -65,7 +65,7 @@ function showView(viewName, param) {
   view.classList.add('active');
 
   // Update bottom nav（知識/變現入口在社團；回測是首頁工具 → 高亮「工具」）
-  const navActiveView = ({ theme: 'community', post: 'community', library: 'community', insight: 'community', monetize: 'community' })[viewName] || viewName;
+  const navActiveView = ({ theme: 'community', post: 'community', library: 'community', insight: 'community', monetize: 'community', health: 'home' })[viewName] || viewName;
   document.querySelectorAll('.nav-link').forEach(a => {
     a.classList.toggle('active', a.dataset.view === navActiveView);
   });
@@ -85,6 +85,7 @@ function showView(viewName, param) {
     case 'calc': initCalc(); break;
     case 'backtest': renderBacktest(); break;
     case 'storm': renderStorm(); break;
+    case 'health': renderHealth(); break;
     case 'insight': renderInsight(); break;
     case 'yield': renderYield(); break;
     case 'calendar': renderCalendar(); break;
@@ -658,6 +659,163 @@ function renderStorm() {
   document.getElementById('storm-note').innerHTML = `💡 同樣持有「${escapeHtml(e.name)}」，有人第一時間砍、有人抱到底——這就是「主動」ETF 真正的差別。把多次風暴累積起來，就是經理人的「跌勢紀律」（見 <a href="#rating" data-view-link>ETF 評等</a>）。`;
 }
 function setStorm(i) { stormIdx = i; renderStorm(); }
+
+// ─── ETF 健檢 ──────────────────────────────────────────────
+const HEALTH_CAT_MAP = {
+  '市值型 ETF': '市值型', '產業主題 ETF': '市值型', '其他台股 ETF': '市值型', 'ESG ETF': '市值型',
+  '高股息 ETF': '高股息',
+  '主動式台股 ETF': '主動式', '主動式海外 ETF': '主動式',
+  '美股 ETF': '美股', '海外股 ETF': '美股', '日股 ETF': '美股',
+  '債券 ETF': '債券', '主動式債券 ETF': '債券'
+};
+const HEALTH_CATS = ['市值型', '高股息', '主動式', '美股', '債券'];
+const HEALTH_CAT_COLOR = { '市值型': '#0891b2', '高股息': '#d97706', '主動式': '#7c3aed', '美股': '#2563eb', '債券': '#059669' };
+const HEALTH_AGES = ['20-30', '30-40', '40-50', '50-60', '60+'];
+let healthAge = '30-40';
+let healthHoldings = [];
+
+function healthExt() { return window.ETFS_EXTENDED || []; }
+function cat5(category) { return HEALTH_CAT_MAP[category] || '市值型'; }
+
+function renderHealth() {
+  document.getElementById('health-age-chips').innerHTML = HEALTH_AGES.map(a =>
+    `<button class="chip ${a === healthAge ? 'active' : ''}" onclick="setHealthAge('${a}')">${a} 歲</button>`).join('');
+  bindHealthSearch();
+  renderHealthHoldings();
+}
+function setHealthAge(a) { healthAge = a; renderHealth(); }
+
+function renderHealthHoldings() {
+  const wrap = document.getElementById('health-holdings');
+  if (!healthHoldings.length) {
+    wrap.innerHTML = '<div class="calc-empty">👇 點下方「＋ 新增持股」加入你手上的 ETF</div>';
+    document.getElementById('health-step3').style.display = 'none';
+    document.getElementById('health-result').innerHTML = '';
+    document.getElementById('health-note').innerHTML = '';
+    return;
+  }
+  wrap.innerHTML = healthHoldings.map((h, i) => {
+    const val = h.zhang * 1000 * h.price;
+    const col = HEALTH_CAT_COLOR[h.cat5];
+    return `
+      <div class="cp-card">
+        <div class="cp-head">
+          <div>
+            <span class="cp-code">${h.code}</span> <span class="cp-name">${escapeHtml(h.name)}</span>
+            <div class="cp-sub"><span class="hc-tag" style="background:${col}">${h.cat5}</span> 現價 $${h.price.toFixed(2)} · 市值 NT$ ${formatNum(val)}</div>
+          </div>
+          <button class="cp-del" onclick="removeHealthEtf(${i})">×</button>
+        </div>
+        <div class="cp-inputs">
+          <div class="cp-inp"><input type="number" min="0" max="99999" value="${h.zhang}" oninput="updateHealthZhang(${i},this.value)"><span>張</span></div>
+        </div>
+      </div>`;
+  }).join('');
+  healthDiagnose();
+}
+function updateHealthZhang(i, v) { if (healthHoldings[i]) { healthHoldings[i].zhang = parseInt(v) || 0; healthDiagnose(); } }
+function removeHealthEtf(i) { healthHoldings.splice(i, 1); renderHealthHoldings(); }
+
+function healthTargets() {
+  const t = {};
+  (ALLOCATION_BY_AGE[healthAge].allocation || []).forEach(a => { t[a.name.replace(' ETF', '')] = a.pct / 100; });
+  return t;
+}
+function healthRepEtf(cat) {
+  const alloc = (ALLOCATION_BY_AGE[healthAge].allocation || []).find(a => a.name.replace(' ETF', '') === cat);
+  const ext = healthExt();
+  if (alloc) { for (const c of alloc.suggested) { const e = ext.find(x => x.code === c && x.price > 0); if (e) return e; } }
+  return ext.find(x => cat5(x.category) === cat && x.price > 0) || null;
+}
+
+function healthDiagnose() {
+  const total = healthHoldings.reduce((s, h) => s + h.zhang * 1000 * h.price, 0);
+  if (total <= 0) { document.getElementById('health-result').innerHTML = '<div class="calc-empty">請在持股填入張數</div>'; return; }
+  document.getElementById('health-step3').style.display = '';
+
+  const curVal = {}; HEALTH_CATS.forEach(c => curVal[c] = 0);
+  healthHoldings.forEach(h => { curVal[h.cat5] += h.zhang * 1000 * h.price; });
+  const tgt = healthTargets();
+
+  const UNDER = 0.05, OVER = 0.08; // 門檻：缺/超過 建議比例多少才標示
+  const rows = HEALTH_CATS.map(cat => {
+    const cur = curVal[cat] / total, target = tgt[cat] || 0, diff = cur - target;
+    let status = 'ok', label = '剛好';
+    if (target === 0 && cur > 0.02) { status = 'over'; label = '非必要'; }
+    else if (diff >= OVER) { status = 'over'; label = '過重'; }
+    else if (diff <= -UNDER) { status = 'under'; label = '不足'; }
+    const col = HEALTH_CAT_COLOR[cat];
+    return `
+      <div class="hc-row">
+        <div class="hc-row-head"><span class="hc-dot" style="background:${col}"></span>${cat}<span class="hc-status ${status}">${label}</span></div>
+        <div class="hc-bar"><div class="hc-bar-cur" style="width:${Math.min(100, cur * 100)}%;background:${col}"></div><div class="hc-bar-tgt" style="left:${Math.min(99, target * 100)}%"></div></div>
+        <div class="hc-vals">你 ${Math.round(cur * 100)}%　·　建議 ${Math.round(target * 100)}%</div>
+      </div>`;
+  }).join('');
+
+  // 建議：到「建議比例 × 目前總市值」還差多少（有界、可解讀；多類同時填不會爆衝）
+  const recs = [];
+  HEALTH_CATS.forEach(cat => {
+    const cur = curVal[cat] / total, target = tgt[cat] || 0;
+    if (target - cur >= UNDER) {
+      const shortfall = target * total - curVal[cat];
+      const rep = healthRepEtf(cat);
+      if (rep && shortfall > 0) {
+        const zhang = Math.max(1, Math.round(shortfall / (rep.price * 1000)));
+        recs.push({ cat, rep, zhang, shortfall });
+      }
+    }
+  });
+  recs.sort((a, b) => b.shortfall - a.shortfall);
+  const overs = HEALTH_CATS.filter(cat => (curVal[cat] / total) - (tgt[cat] || 0) >= OVER);
+
+  const recHtml = recs.length ? recs.map(r => `
+    <div class="hc-rec" style="border-left-color:${HEALTH_CAT_COLOR[r.cat]}">
+      <div class="hc-rec-cat">補 <b>${r.cat}</b>　<span class="hc-rec-gap">離建議差 NT$ ${formatNum(r.shortfall)}</span></div>
+      <div class="hc-rec-body">可考慮 <b>${r.rep.code} ${escapeHtml(r.rep.name)}</b>（現價 $${r.rep.price.toFixed(2)}）<br>約 <b>${r.zhang} 張</b>（NT$ ${formatNum(r.zhang * r.rep.price * 1000)}）可拉到建議比例</div>
+    </div>`).join('') : '<div class="hc-allgood">✓ 各類別都接近建議比例，配置很健康！</div>';
+
+  document.getElementById('health-result').innerHTML = `
+    <div class="hc-total">目前總市值 <b>NT$ ${formatNum(total)}</b> · ${healthHoldings.length} 檔 · ${ALLOCATION_BY_AGE[healthAge].stage}</div>
+    <div class="hc-compare">${rows}</div>
+    <div class="section-title" style="margin-top:14px">💡 建議加碼（新資金優先序）</div>
+    ${recHtml}
+    ${overs.length ? `<div class="hc-over">⚠️ <b>${overs.join('、')}</b> 已超過建議比例。要達標可把這幾類部分轉到上面不足的類別，或把新資金全投不足類別、這幾類先停扣。</div>` : ''}`;
+
+  document.getElementById('health-note').innerHTML = `🍚 ${escapeHtml(ALLOCATION_BY_AGE[healthAge].tip)}`;
+}
+
+function openHealthAdd() {
+  document.getElementById('health-add-panel').style.display = 'block';
+  document.getElementById('health-add-btn').style.display = 'none';
+  const s = document.getElementById('health-search'); s.value = ''; renderHealthSearch();
+  setTimeout(() => s.focus(), 50);
+}
+function closeHealthAdd() {
+  const p = document.getElementById('health-add-panel'); if (p) p.style.display = 'none';
+  const b = document.getElementById('health-add-btn'); if (b) b.style.display = '';
+}
+function bindHealthSearch() {
+  const s = document.getElementById('health-search');
+  if (s && !s.dataset.bound) { s.dataset.bound = '1'; s.addEventListener('input', renderHealthSearch); }
+}
+function renderHealthSearch() {
+  const q = (document.getElementById('health-search')?.value || '').trim().toLowerCase();
+  const dd = document.getElementById('health-dropdown'); if (!dd) return;
+  let list = healthExt().filter(e => e.price > 0 && !healthHoldings.some(h => h.code === e.code));
+  if (q) list = list.filter(e => e.code.toLowerCase().includes(q) || e.name.toLowerCase().includes(q));
+  list = list.slice(0, 40);
+  dd.innerHTML = list.length ? list.map(e =>
+    `<div class="etf-opt" data-code="${e.code}"><b>${e.code}</b> ${escapeHtml(e.name)}<span class="etf-opt-tag">${cat5(e.category)} · $${e.price.toFixed(2)}</span></div>`).join('')
+    : '<div class="etf-opt" style="color:#9ca3af">查無 ETF</div>';
+  dd.querySelectorAll('.etf-opt[data-code]').forEach(el => {
+    el.onclick = () => {
+      const e = healthExt().find(x => x.code === el.dataset.code);
+      if (e) { healthHoldings.push({ code: e.code, name: e.name, price: e.price, cat5: cat5(e.category), zhang: 10 }); renderHealthHoldings(); showToast(`已加入 ${e.code}`); }
+      closeHealthAdd();
+    };
+  });
+}
 
 // ─── Yield Ranking ───────────────────────────────────────────
 let yieldFilter = 'all';

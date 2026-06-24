@@ -1316,6 +1316,32 @@ body {
 .rate-disc-fill { height: 100%; border-radius: 6px; }
 .rate-disc-v { font-size: 16px; font-weight: 800; color: #111827; flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; line-height: 1.1; }
 .rate-disc-rate { font-size: 9px; color: #9ca3af; font-weight: 600; }
+
+/* ─── ETF 健檢 ─── */
+.hc-tag { display: inline-block; font-size: 10px; color: white; border-radius: 5px; padding: 1px 6px; font-weight: 700; margin-right: 4px; }
+.hc-total { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 12px; padding: 12px 14px; font-size: 13px; color: #065f46; margin-bottom: 12px; }
+.hc-total b { font-size: 16px; color: #047857; }
+.hc-compare { background: white; border: 1px solid #e5e7eb; border-radius: 14px; padding: 14px; }
+.hc-row { margin-bottom: 12px; }
+.hc-row:last-child { margin-bottom: 0; }
+.hc-row-head { font-size: 13px; font-weight: 700; color: #374151; display: flex; align-items: center; gap: 6px; }
+.hc-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.hc-status { font-size: 10px; font-weight: 700; border-radius: 5px; padding: 1px 7px; margin-left: auto; }
+.hc-status.over { background: #fee2e2; color: #b91c1c; }
+.hc-status.under { background: #fef3c7; color: #b45309; }
+.hc-status.ok { background: #d1fae5; color: #047857; }
+.hc-bar { position: relative; height: 12px; background: #f3f4f6; border-radius: 6px; margin: 6px 0 3px; overflow: visible; }
+.hc-bar-cur { height: 100%; border-radius: 6px; }
+.hc-bar-tgt { position: absolute; top: -2px; width: 2px; height: 16px; background: #111827; }
+.hc-bar-tgt::after { content: "建議"; position: absolute; top: -13px; left: 50%; transform: translateX(-50%); font-size: 8px; color: #111827; white-space: nowrap; }
+.hc-vals { font-size: 11px; color: #6b7280; }
+.hc-rec { background: white; border: 1px solid #e5e7eb; border-left: 4px solid #059669; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+.hc-rec-cat { font-size: 13px; color: #111827; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.hc-rec-gap { font-size: 11px; color: #9ca3af; font-weight: 600; }
+.hc-rec-body { font-size: 12px; color: #4b5563; line-height: 1.6; margin-top: 4px; }
+.hc-rec-body b { color: #111827; }
+.hc-allgood { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 10px; padding: 14px; text-align: center; font-size: 14px; font-weight: 700; color: #047857; }
+.hc-over { font-size: 12px; color: #92400e; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 10px 12px; margin-top: 10px; line-height: 1.6; }
 .calc-add-panel {
   background: white; border: 1px solid #d1d5db;
   border-radius: 12px; padding: 14px; margin-bottom: 12px;

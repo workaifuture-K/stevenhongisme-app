@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
 <meta name="theme-color" content="#10b981">
 <title>稀飯的 ETF 日報 — Prototype</title>
-<link rel="stylesheet" href="css/style.css?v=38">
+<link rel="stylesheet" href="css/style.css?v=40">
 </head>
 <body>
 
@@ -32,6 +32,17 @@
     <!-- ─────────── HOME ─────────── -->
     <section id="view-home" class="view active">
       <div class="section-title">⭐ 熱門工具</div>
+
+      <!-- 健檢 hero（新功能，置頂）-->
+      <a href="#health" class="featured-tool" data-view-link style="background:linear-gradient(135deg,#059669 0%,#047857 100%);box-shadow:0 4px 12px rgba(5,150,105,0.25)">
+        <div class="ft-icon">🩺</div>
+        <div class="ft-meta">
+          <div class="ft-badge">新功能</div>
+          <div class="ft-title">ETF 健檢</div>
+          <div class="ft-desc">輸入年紀＋手上的 ETF → 檢查配置健不健康、缺哪一類、建議補幾張用多少錢。</div>
+          <div class="ft-cta" style="color:#047857">開始健檢 →</div>
+        </div>
+      </a>
 
       <!-- 全部工具：快捷小卡（大 hero 已改成 tab + 小卡）-->
       <div class="grid-quick">
@@ -192,6 +203,37 @@
         含 50+ ETF 預估配息資料庫、年度試算、配息行事曆。
         <br>
         <a href="#monetize" class="upsell-cta" data-view-link>查看訂閱方案 →</a>
+      </div>
+    </section>
+
+    <!-- ─────────── HEALTH（ETF 健檢）─────────── -->
+    <section id="view-health" class="view">
+      <div class="calc-hero" style="background:linear-gradient(135deg,#059669 0%,#047857 100%)">
+        <h2>🩺 ETF 健檢</h2>
+        <p>輸入年紀＋手上的 ETF，幫你檢查配置健不健康、還缺哪一類、建議補幾張。</p>
+      </div>
+
+      <div class="calc-step-label"><span class="calc-step-num">1</span>你的年紀</div>
+      <div class="filter-chips" id="health-age-chips"></div>
+
+      <div class="calc-step-label"><span class="calc-step-num">2</span>你持有的 ETF</div>
+      <div id="health-holdings"></div>
+      <button id="health-add-btn" class="calc-add-btn" onclick="openHealthAdd()">＋ 新增持股</button>
+      <div id="health-add-panel" class="calc-add-panel" style="display:none">
+        <div class="calc-add-panel-head">
+          <input type="text" id="health-search" placeholder="輸入代號或名稱，例如 0050 / 高股息" autocomplete="off">
+          <button class="calc-add-close" onclick="closeHealthAdd()">取消</button>
+        </div>
+        <div id="health-dropdown" class="etf-dropdown" style="display:block;position:static;box-shadow:none;border:none;margin-top:8px"></div>
+      </div>
+
+      <div class="calc-step-label" id="health-step3" style="display:none"><span class="calc-step-num">3</span>健檢結果</div>
+      <div id="health-result"></div>
+      <div class="calc-note" id="health-note"></div>
+
+      <div class="upsell">
+        <b>🩺 健檢說明</b><br>
+        以你的年紀對應稀飯建議配置（市值型／高股息／主動式／美股／債券）比對你目前持股市值占比，找出過重與不足，並用現價估算補到建議比例需要幾張。配置為衛教性參考，非個人化投資建議。
       </div>
     </section>
 
@@ -557,14 +599,14 @@
 
 </div>
 
-<script src="data/data.js?v=38"></script>
-<script src="data/etfs_extended.js?v=38"></script>
-<script src="data/etf_dividends.js?v=38"></script>
-<script src="data/all_etfs.js?v=38"></script>
-<script src="data/rating.js?v=38"></script>
-<script src="data/holdings.js?v=38"></script>
-<script src="data/returns.js?v=38"></script>
-<script src="data/events.js?v=38"></script>
-<script src="js/app.js?v=38"></script>
+<script src="data/data.js?v=40"></script>
+<script src="data/etfs_extended.js?v=40"></script>
+<script src="data/etf_dividends.js?v=40"></script>
+<script src="data/all_etfs.js?v=40"></script>
+<script src="data/rating.js?v=40"></script>
+<script src="data/holdings.js?v=40"></script>
+<script src="data/returns.js?v=40"></script>
+<script src="data/events.js?v=40"></script>
+<script src="js/app.js?v=40"></script>
 </body>
 </html>
